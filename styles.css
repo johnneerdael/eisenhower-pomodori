@@ -332,14 +332,39 @@ body.focus-mode #focusTimer { display: flex; }
 	border-color: #3b82f6;
 }
 
-/* Overriding original button with enhanced class */
+/* --- Styling for the main Add Task button --- */
 #addTaskBtn {
-    min-width: 120px;
-}
-#addTaskBtn:hover, #addTaskBtn:focus {
-    background-color: #2563eb; /* Fallback from original */
-}
-
+	/* Applying base .btn styles */
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.35rem;
+	padding: 0.6rem 1.25rem;
+	border: 0;
+	border-radius: 9999px; /* pill */
+	font-size: var(--font-size-base);
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	line-height: 1;
+	cursor: pointer;
+	user-select: none;
+	transition: background var(--transition-speed) ease, transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+	min-width: 120px;
+  
+	/* Applying .btn-primary styles */
+	background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+	color: #fff;
+	box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+  }
+  
+  #addTaskBtn:hover,
+  #addTaskBtn:focus {
+	/* Applying .btn-primary:hover styles */
+	transform: translateY(-2px);
+	box-shadow: 0 6px 18px rgba(99,102,241,0.45);
+  }
+  
 .matrix-grid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
