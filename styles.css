@@ -134,12 +134,16 @@ body {
   padding: 0.25rem 0.8rem;
   line-height: 1;
   /* keep it above the sheet when open */
-  position: relative;
-  z-index: 30;
+  position:fixed;
+  top:calc(var(--safe-top) + 1rem);
+  right:1rem;
+  z-index:50;
 }
+
 
 /* ── Slide-down sheet ────────────────────────── */
 .mobile-nav{
+  margin-top:var(--safe-top);   /* avoid Dynamic Island overlap */
   position: absolute;
   top: calc(100% + 0.5rem);          /* directly below burger */
   right: 0;

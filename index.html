@@ -17,14 +17,23 @@
   <main class="app-container">
     <!-- ─────────────────────── Header ─────────────────────── -->
     <header class="app-header">
-      <h1>FocusMatrix</h1>
-      <button id="burger" class="burger-btn" aria-label="Main menu">☰</button>
-      <nav id="mobileNav" class="mobile-nav">
-        <button id="focusToggle"  class="mobile-item">🎯 Focus</button>
-        <button id="progressToggle" class="mobile-item">📊 Progress</button>
-        <button id="exportBtn"   class="mobile-item">💾 Export</button>
-        <button id="settingsBtn" class="mobile-item">⚙️ Settings</button>
-      </nav>
+    <h1>FocusMatrix</h1>
+  
+      <!-- hamburger -->
+    <button id="burger"
+            class="burger-btn"
+            aria-label="Main menu"
+            aria-haspopup="true"
+            aria-controls="mobileNav"
+            aria-expanded="false">☰</button>
+  
+      <!-- slide-down sheet -->
+    <nav id="mobileNav" class="mobile-nav" role="menu">
+      <button id="focusToggle"    class="mobile-item" role="menuitem">🎯 Focus</button>
+      <button id="progressToggle" class="mobile-item" role="menuitem">📊 Progress</button>
+      <button id="exportBtn"      class="mobile-item" role="menuitem">💾 Export</button>
+      <button id="settingsBtn"    class="mobile-item" role="menuitem">⚙️ Settings</button>
+    </nav>
     </header>
 
     <!-- ─────────────────────── Focus‑Timer Overlay ─────────────────────── -->
