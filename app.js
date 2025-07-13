@@ -583,7 +583,45 @@ export class FocusMatrixCloud {
   /* ====================== UNCHANGED METHODS ====================== */
   get isOnline() { return navigator.onLine && !!this.user; }
   async loadTasks() { if (this.isOnline) { const { data, error } = await supabase.from('tasks').select('*').eq('user_id', this.user.id).order('created_at'); if (error) { this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]'); return; } this.tasks = (data || []).map(dbTask => ({ id: `task_${dbTask.id}`, database_id: dbTask.id, text: dbTask.text, quadrant: dbTask.quadrant, goal: dbTask.goal || null, created_at: dbTask.created_at, audioNote: dbTask.audio_note })); } else { this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]'); } }
-  async saveTasks() { if (this.isOnline) { const newTasks = this.tasks.filter(t => !t.database_id); const existingTasks = this.tasks.filter(t => t.database_id); if (newTasks.length > 0) { const insertData = newTasks.map(t => ({ user_id: this.user.id, text: t.text, quadrant: t.quadrant, goal: t.goal, created_at: t.created_at, updated_at: new Date().toISOString(), audio_note: t.audioNote })); const { data: insertedTasks, error: insertError } = await supabase.from('tasks').insert(insertData).select(); if (!insertError && insertedTasks) { insertedTasks.forEach((dbTask, index) => { const localTask = newTasks[index]; if (localTask) localTask.database_id = dbTask.id; }); } } if (existingTasks.length > 0) { const updates = existingTasks.map(t => ({ id: t.database_id, user_id: this.user.id, text: t.text, quadrant: t.quadrant, goal: t.goal, updated_at: new Date().toISOString(), audio_note: t.audioNote })); await supabase.from('tasks').upsert(updates); } } localStorage.setItem('focusmatrix_ultimate_tasks', JSON.stringify(this.tasks)); }
+  async saveTasks() {
+    if (this.isOnline) {
+        const newTasks = this.tasks.filter(t => !t.database_id);
+        const existingTasks = this.tasks.filter(t => t.database_id);
+        
+        if (newTasks.length > 0) {
+            const insertData = newTasks.map(t => ({
+                user_id: this.user.id,
+                text: t.text,
+                quadrant: t.quadrant,
+                goal: t.goal,
+                created_at: t.created_at,
+                updated_at: new Date().toISOString(),
+                // audio_note: t.audioNote // REMOVED: This column does not exist in your database schema
+            }));
+            const { data: insertedTasks, error: insertError } = await supabase.from('tasks').insert(insertData).select();
+            if (!insertError && insertedTasks) {
+                insertedTasks.forEach((dbTask, index) => {
+                    const localTask = newTasks[index];
+                    if (localTask) localTask.database_id = dbTask.id;
+                });
+            }
+        }
+        
+        if (existingTasks.length > 0) {
+            const updates = existingTasks.map(t => ({
+                id: t.database_id,
+                user_id: this.user.id,
+                text: t.text,
+                quadrant: t.quadrant,
+                goal: t.goal,
+                updated_at: new Date().toISOString(),
+                // audio_note: t.audioNote // REMOVED: This column does not exist in your database schema
+            }));
+            await supabase.from('tasks').upsert(updates);
+        }
+    }
+    localStorage.setItem('focusmatrix_ultimate_tasks', JSON.stringify(this.tasks));
+  }
   async loadSettings() { const defaults = this.settings; if (this.isOnline) { try { const { data, error } = await supabase.from('settings').select('data').eq('user_id', this.user?.id).single(); if (error && error.code !== 'PGRST116') console.error('Error loading settings:', error); const cloud = data?.data || {}; const local = JSON.parse(localStorage.getItem('focusmatrix_ultimate_settings') || '{}'); this.settings = { ...defaults, ...cloud, ...local }; } catch (error) { this.settings = { ...defaults, ...JSON.parse(localStorage.getItem('focusmatrix_ultimate_settings') || '{}') }; } } else { this.settings = { ...defaults, ...JSON.parse(localStorage.getItem('focusmatrix_ultimate_settings') || '{}') }; } }
   async saveSettings() { if (this.isOnline) { await supabase.from('settings').upsert({ user_id: this.user.id, data: this.settings }); } localStorage.setItem('focusmatrix_ultimate_settings', JSON.stringify(this.settings)); this.updateGoalSelect(); }
   async loadStats() { const today = new Date().toISOString().split('T')[0]; if (this.isOnline) { const { data, error } = await supabase.from('daily_stats').select('*').eq('user_id', this.user.id).eq('day', today).single(); if (error && error.code !== 'PGRST116') console.error('Error loading stats:', error); if (data) { this.stats = { ...this.stats, ...data, tasksAddedToday: data.tasks_added || 0, tasksCompletedToday: data.tasks_completed || 0, tasksEliminatedToday: data.tasks_eliminated || 0, focusSessionsToday: data.focus_sessions || 0, lastUsedDate: today, day: today }; } else { this.stats.tasksAddedToday = 0; this.stats.tasksCompletedToday = 0; this.stats.tasksEliminatedToday = 0; this.stats.focusSessionsToday = 0; this.stats.lastUsedDate = today; this.stats.day = today; } } else { this.stats = JSON.parse(localStorage.getItem('focusmatrix_ultimate_stats') || '{}') || { ...this.stats }; if (this.stats.day !== today) this.stats = { ...this.stats, day: today }; } }
