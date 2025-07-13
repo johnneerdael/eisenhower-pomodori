@@ -142,14 +142,15 @@ body {
 
 /* ── Burger button ───────────────────────────── */
 .burger-btn{
-  padding-top: calc(var(--safe-top) + var(--spacing-sm));
   background: var(--secondary-bg);
   border: 2px solid var(--border-color);
   border-radius: var(--border-radius);
   font-size: 1.6rem;
+  padding: 0.25rem 0.8rem;
   line-height: 1;
   /* keep it above the sheet when open */
   position:fixed;
+  top:calc(var(--safe-top) + 1rem);
   right:1rem;
   z-index:50;
 }
