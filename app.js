@@ -25,9 +25,6 @@ const SUPABASE_URL = "https://mzxeyosjcunoucmjgvln.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16eGV5b3NqY3Vub3VjbWpndmxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzOTgyODIsImV4cCI6MjA2Nzk3NDI4Mn0.kXdS6Pvxt6Q62G5IOo_NZhc2jinTM7swfc7MfBxsJvE";
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* ───────────────────────── Auth helper ─────────────────────── */
-// app.js
-
 /* ───────────────────────── Auth UI Manager ─────────────────────── */
 class AuthManager {
   constructor(app) {
@@ -122,7 +119,7 @@ class AuthManager {
 }
 
 /* ==================================================================
- *                      APP CLASS
+ * APP CLASS
  * ================================================================== */
 export class FocusMatrixCloud {
   constructor() {
@@ -163,9 +160,8 @@ export class FocusMatrixCloud {
     this.progressMode = false;
     this.authManager = new AuthManager(this);
 
-    // app.js -> inside FocusMatrixCloud class
-
-    async handleLogout() {
+    // *** BUILD FIX: Define handleLogout as an arrow function property ***
+    this.handleLogout = async () => {
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Error logging out:', error);
@@ -174,7 +170,7 @@ export class FocusMatrixCloud {
         // Reloading is the simplest way to reset the app state to the login screen
         window.location.reload();
       }
-    }
+    };
 
     /* Timer */
     this.timerRunning = false;
@@ -208,8 +204,9 @@ export class FocusMatrixCloud {
       // Wait for the user to log in successfully
       this.user = await this.authManager.authPromise;
     }
-    document.getElementById('logoutBtn').style.display = 'inline-flex';
 
+    // Show the logout button now that we are authenticated
+    document.getElementById('logoutBtn').style.display = 'inline-flex';
 
     // Once authenticated, proceed with loading the app
     await this.loadSettings();
@@ -489,22 +486,17 @@ export class FocusMatrixCloud {
   /* ====================== EVENT BINDINGS ====================== */
   bindEvents() {
     /* Task input */
-    /* ▼ UPDATE THIS SECTION ▼ */
-    document.getElementById('burger').addEventListener('click', () => {
-      // This logic is now handled in the DOMContentLoaded listener at the bottom
-    });
     document.getElementById('addTaskBtn').addEventListener('click', () => this.handleAddTask());
     document.getElementById('taskInput').addEventListener('keypress', e => {
       if (e.key === 'Enter') this.handleAddTask();
     });
 
-    /* Header */
+    /* Header & Logout */
     document.getElementById('progressToggle').addEventListener('click', () => this.toggleProgressDashboard());
     document.getElementById('focusToggle').addEventListener('click', () => this.toggleFocusMode());
     document.getElementById('exportBtn').addEventListener('click', () => this.quickExport());
     document.getElementById('settingsBtn').addEventListener('click', () => this.openSettings());
     document.getElementById('logoutBtn').addEventListener('click', () => this.handleLogout());
-
 
     /* Timer & settings */
     this.bindTimerEvents();
