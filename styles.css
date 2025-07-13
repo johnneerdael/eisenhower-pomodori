@@ -1045,3 +1045,86 @@ body.focus-mode #focusTimer { display: flex; }
   justify-content: center;
   margin-top: var(--spacing-lg);
 }
+
+/* ==================================================================
+   TASK ITEM ENHANCEMENTS
+   ================================================================== */
+
+/* 1. FIX: Double the size and style the task action icons */
+.task-action-btn {
+	background: transparent;
+	border: none;
+	padding: 0 var(--spacing-xs);
+	cursor: pointer;
+	font-size: 1.75rem; /* Increased from default to be much larger */
+	line-height: 1;
+	opacity: 0.6;
+	transition: opacity var(--transition-speed) ease, transform var(--transition-speed) ease;
+  }
+  
+  .task-item:hover .task-action-btn {
+	opacity: 1;
+  }
+  
+  .task-action-btn:hover {
+	transform: scale(1.2);
+  }
+  
+  /* ==================================================================
+	 AUDIO RECORDING MODAL (FIX)
+	 ================================================================== */
+  
+  /* 2. FIX: Add missing styles to make the Audio Record modal visible */
+  .audio-record-modal {
+	position: fixed;
+	inset: 0;
+	display: flex; /* This is controlled by the JS file */
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.7);
+	backdrop-filter: blur(8px);
+	z-index: 4500; /* High z-index to appear on top */
+	animation: overlayFadeIn 0.3s ease;
+  }
+  
+  .audio-record-box {
+	background: var(--secondary-bg);
+	padding: var(--spacing-xl);
+	border-radius: 1.5rem;
+	text-align: center;
+	width: 90%;
+	max-width: 400px;
+	animation: modalPopIn 0.3s ease-out;
+	border: 1px solid var(--border-color);
+	box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-md);
+  }
+  
+  .audio-record-box h4 {
+	font-size: var(--font-size-xl);
+	margin-bottom: 0;
+  }
+  
+  #audioRecordTaskText {
+	font-weight: 500;
+	color: var(--text-secondary);
+	background: var(--primary-bg);
+	padding: var(--spacing-xs) var(--spacing-sm);
+	border-radius: var(--border-radius);
+	border: 1px solid var(--border-color);
+  }
+  
+  .audio-record-timer {
+	font-size: 1.5rem;
+	font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Courier New', monospace;
+	font-weight: 600;
+  }
+  
+  .audio-record-controls,
+  .audio-record-footer {
+	display: flex;
+	gap: var(--spacing-sm);
+	justify-content: center;
+  }
