@@ -325,23 +325,6 @@ export class FocusMatrixCloud {
       else { window.location.reload(); }
     };
 
-    playAudioNote(task) {
-      if (!task.audioNote) {
-          this.showFeedback("No audio note found for this task.", "error");
-          return;
-      }
-      try {
-          // Create a new Blob from the stored ArrayBuffer
-          const blob = new Blob([task.audioNote], { type: 'audio/webm' });
-          const audioUrl = URL.createObjectURL(blob);
-          const audio = new Audio(audioUrl);
-          audio.play();
-      } catch (error) {
-          console.error("Error playing audio note:", error);
-          this.showFeedback("Could not play audio note.", "error");
-      }
-    }
-
     /* Timer */
     this.timerRunning = false;
     this.focusTimer = null;
@@ -390,6 +373,23 @@ export class FocusMatrixCloud {
     this.bindDataManagementEvents();
     document.querySelectorAll('.task-list').forEach(l => { l.addEventListener('dragover', e => this.handleDragOver(e)); l.addEventListener('drop', e => this.handleDrop(e)); l.addEventListener('dragenter', e => this.handleDragEnter(e)); l.addEventListener('dragleave', e => this.handleDragLeave(e)); });
     document.addEventListener('keydown', e => this.handleKeyboard(e));
+  }
+
+  playAudioNote(task) {
+    if (!task.audioNote) {
+        this.showFeedback("No audio note found for this task.", "error");
+        return;
+    }
+    try {
+        // Create a new Blob from the stored ArrayBuffer
+        const blob = new Blob([task.audioNote], { type: 'audio/webm' });
+        const audioUrl = URL.createObjectURL(blob);
+        const audio = new Audio(audioUrl);
+        audio.play();
+    } catch (error) {
+        console.error("Error playing audio note:", error);
+        this.showFeedback("Could not play audio note.", "error");
+    }
   }
 
   /* ====================== TASK RENDERING ====================== */
