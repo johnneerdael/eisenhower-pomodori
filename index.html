@@ -44,6 +44,8 @@
         <header class="timer-header">
           <div class="timer-session-info">
             <h3 id="timerSessionTitle">Time to Focus!</h3>
+            <!-- ▼ NEW: Display current task ▼ -->
+            <p id="timerTaskText" class="timer-task-text">Your most important task</p>
             <span id="timerSessionCount" class="timer-session-count">Session 1 of 4</span>
           </div>
         </header>
@@ -113,12 +115,36 @@
     </section>
 
     <!-- ─────────────────────── Eisenhower Matrix ─────────────────────── -->
-    <section class="matrix-container">
+    <section id="matrixContainer" class="matrix-container">
       <div class="matrix-grid">
-        <div class="quadrant q1" data-quadrant="1"><h2>Do First</h2><p>Urgent + Important</p><div id="q1-tasks" class="task-list"></div></div>
-        <div class="quadrant q2" data-quadrant="2"><h2>Schedule</h2><p>Important + Not Urgent</p><div id="q2-tasks" class="task-list"></div></div>
-        <div class="quadrant q3" data-quadrant="3"><h2>Delegate</h2><p>Urgent + Not Important</p><div id="q3-tasks" class="task-list"></div></div>
-        <div class="quadrant q4" data-quadrant="4"><h2>Eliminate</h2><p>Neither Urgent nor Important</p><div id="q4-tasks" class="task-list"></div></div>
+        <div class="quadrant q1" data-quadrant="1">
+          <div class="quadrant-header">
+            <div class="quadrant-title"><h2>Do First</h2><p>Urgent + Important</p></div>
+            <button class="focus-quadrant-btn" data-quadrant="1" aria-label="Focus on Do First tasks">🎯</button>
+          </div>
+          <div id="q1-tasks" class="task-list"></div>
+        </div>
+        <div class="quadrant q2" data-quadrant="2">
+          <div class="quadrant-header">
+            <div class="quadrant-title"><h2>Schedule</h2><p>Important + Not Urgent</p></div>
+            <button class="focus-quadrant-btn" data-quadrant="2" aria-label="Focus on Schedule tasks">🎯</button>
+          </div>
+          <div id="q2-tasks" class="task-list"></div>
+        </div>
+        <div class="quadrant q3" data-quadrant="3">
+          <div class="quadrant-header">
+            <div class="quadrant-title"><h2>Delegate</h2><p>Urgent + Not Important</p></div>
+            <button class="focus-quadrant-btn" data-quadrant="3" aria-label="Focus on Delegate tasks">🎯</button>
+          </div>
+          <div id="q3-tasks" class="task-list"></div>
+        </div>
+        <div class="quadrant q4" data-quadrant="4">
+          <div class="quadrant-header">
+            <div class="quadrant-title"><h2>Eliminate</h2><p>Neither Urgent nor Important</p></div>
+            <button class="focus-quadrant-btn" data-quadrant="4" aria-label="Focus on Eliminate tasks">🎯</button>
+          </div>
+          <div id="q4-tasks" class="task-list"></div>
+        </div>
       </div>
     </section>
   </main>
@@ -195,6 +221,19 @@
         </section>
       </div>
       <footer class="settings-footer"><button id="resetSettings" class="btn btn-secondary">Reset to Defaults</button><div class="footer-actions"><button id="cancelSettings" class="btn btn-secondary">Cancel</button><button id="saveSettings" class="btn btn-primary">Save Changes</button></div></footer>
+    </div>
+  </div>
+  
+  <!-- ▼ NEW: Post-Pomodoro Triage Modal ▼ -->
+  <div id="triageModal" class="triage-modal" style="display: none;">
+    <div class="triage-box">
+        <h4>Session Complete!</h4>
+        <p>Did you finish this task?</p>
+        <p id="triageTaskText" class="triage-task-text"></p>
+        <div class="triage-actions">
+            <button id="triageCompleteBtn" class="btn btn-primary">✅ Yes, it's done!</button>
+            <button id="triageIncompleteBtn" class="btn btn-secondary">❌ Not yet</button>
+        </div>
     </div>
   </div>
 

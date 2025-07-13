@@ -93,18 +93,21 @@ body.focus-mode #focusTimer { display: flex; }
   margin-bottom: var(--spacing-lg);
 }
 
+.timer-session-info {
+  text-align: left;
+  width: 100%;
+}
+
 .timer-session-info h3 {
   font-size: var(--font-size-xl);
   font-weight: 700;
   margin: 0 0 0.25rem 0;
-  text-align: left;
 }
 
 .timer-session-count {
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
   font-weight: 500;
-  text-align: left;
 }
 
 /* Enhanced timer display */
@@ -331,54 +334,6 @@ input[type="range"].slider:hover::-webkit-slider-thumb { background: var(--accen
   .feedback-message { transition: none !important; animation: none !important; }
 }
 
-/* styles-enhanced.css */
-
-/***** 2. Enhanced Focus Timer Overlay *****/
-/* Container revealed when focus mode is active */
-#focusTimer {
-  position: fixed;
-  inset: 0; /* Modern way to set top, right, bottom, left to 0 */
-  display: none; /* Changed to 'flex' by JavaScript to show */
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.65); /* Dark, semi-transparent backdrop */
-  backdrop-filter: blur(6px); /* Glassy effect for modern browsers */
-  z-index: 2100; /* Ensures it's on top of all other content */
-  animation: overlayFadeIn 0.3s ease; /* Subtle fade-in for the backdrop */
-}
-
-/* This class is toggled on the body tag by JS */
-body.focus-mode #focusTimer {
-  display: flex;
-}
-
-/* The main box holding the timer content */
-.focus-timer {
-  background: var(--secondary-bg);
-  padding: var(--spacing-xl);
-  border-radius: 1.5rem; /* Nicely rounded corners */
-  box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-  text-align: center;
-  width: 90%;
-  max-width: 480px; /* Limits width on large screens */
-  border: 1px solid var(--border-color);
-  animation: modalPopIn 0.3s ease-out forwards; /* Fun pop-in animation */
-}
-
-/* Keyframe animations for the entrance */
-@keyframes overlayFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes modalPopIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-/* (The rest of your .timer-display, .timer-controls, etc. styles will apply inside this box) */
-/* styles-enhanced.css */
-
 /***** 6. Authentication Page Styles *****/
 .auth-container {
   position: fixed;
@@ -470,8 +425,6 @@ body.focus-mode #focusTimer {
   text-decoration: underline;
 }
 
-/* styles-enhanced.css */
-
 /***** 7. Logout Button Styles *****/
 @media (min-width: 769px) {
   #logoutBtn {
@@ -488,4 +441,114 @@ body.focus-mode #focusTimer {
     background-color: var(--q3-border) !important;
     color: var(--secondary-bg);
   }
+}
+
+/***** 8. NEW: Focus Integration Styles *****/
+
+/* Quadrant Header Layout */
+.quadrant-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  /* The h2/p margin is now on the header */
+  margin-bottom: var(--spacing-md);
+}
+.quadrant h2, .quadrant p {
+  margin-bottom: 0;
+}
+
+/* Quadrant Focus Button */
+.focus-quadrant-btn {
+  background: transparent;
+  border: 2px solid var(--border-color);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all var(--transition-speed) ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+.focus-quadrant-btn:hover {
+  background: var(--accent-start);
+  color: white;
+  border-color: transparent;
+  transform: scale(1.1);
+}
+
+/* Highlighting/Dimming Quadrants */
+.matrix-container.focus-active .quadrant {
+  opacity: 0.4;
+  transition: all 0.3s ease;
+}
+.matrix-container.focus-active .quadrant.is-focus-target {
+  opacity: 1;
+  transform: scale(1.02);
+  box-shadow: 0 0 0 4px var(--accent-start), var(--shadow-md);
+}
+
+/* Task Text in Timer */
+.timer-task-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background-color: var(--primary-bg);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius);
+  margin-top: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.3;
+}
+
+/* Triage Modal */
+.triage-modal {
+  position: fixed;
+  inset: 0;
+  display: none; /* Controlled by JS */
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  z-index: 4000;
+  animation: overlayFade 0.3s ease;
+}
+.triage-box {
+  background: var(--secondary-bg);
+  padding: var(--spacing-xl);
+  border-radius: 1.5rem;
+  text-align: center;
+  width: 90%;
+  max-width: 400px;
+  animation: modalPopIn 0.3s ease-out;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+}
+.triage-box h4 {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--spacing-xs);
+}
+.triage-box > p {
+  color: var(--text-secondary);
+}
+.triage-task-text {
+  font-weight: bold;
+  background: var(--primary-bg);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius);
+  margin: var(--spacing-md) 0;
+  border: 1px solid var(--border-color);
+}
+.triage-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: center;
+  margin-top: var(--spacing-lg);
 }
