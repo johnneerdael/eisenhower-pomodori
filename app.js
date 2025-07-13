@@ -1,117 +1,145 @@
 /* ------------------------------------------------------------------
- * FocusMatrix Ultimate – Goals Edition (Supabase static build)
+ * FocusMatrix Ultimate – Goals & Audio Edition (Supabase static build)
  * ---
- * • Everything from v2.0‑cloud *plus* up to 3 "North‑Star" goals.
- * • Goals live in settings.goals[] and sync through Supabase settings row.
- * • Task‑add flow offers a goal <select>; each task stores goal and shows 🎯 badge.
- * • All original timer, DnD, export, accessibility code retained.
+ * • Adds Tone.js for dynamic, file-free audio generation.
+ * • New AudioManager class handles all sound logic.
+ * • Settings for soundscapes (rain, noise) and ticking clock.
  * ------------------------------------------------------------------ */
 
 import { createClient } from '@supabase/supabase-js';
-import { App as CapApp } from '@capacitor/app';            // NEW – Capacitor deep-link helper
+import { App as CapApp } from '@capacitor/app';
+import * as Tone from 'tone'; // NEW: Import Tone.js as a module
+
 /* ------------------------------------------------------------------ */
 
-/* ── Deep-link handler: fires when a magic-link opens the IPA ── */
+/* ── Deep-link handler ── */
 CapApp.addListener('appUrlOpen', ({ url }) => {
   if (url && url.startsWith('focusmatrix://auth-callback')) {
-    /* Relay the URL into the WebView so Supabase JS can read #access_token */
     const webUrl = url.replace('focusmatrix://auth-callback', 'https://dummy.local/');
     window.location.replace(webUrl);
   }
 });
 
-/* ─────── Supabase keys (replace with env if bundling) ─────── */
+/* ─────── Supabase keys ─────── */
 const SUPABASE_URL = "https://mzxeyosjcunoucmjgvln.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16eGV5b3NqY3Vub3VjbWpndmxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzOTgyODIsImV4cCI6MjA2Nzk3NDI4Mn0.kXdS6Pvxt6Q62G5IOo_NZhc2jinTM7swfc7MfBxsJvE";
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* ───────────────────────── Audio Manager (NEW) ─────────────────────── */
+/* ───────────────────────── Audio Manager (NEW & ROBUST) ─────────────────────── */
 class AudioManager {
-  constructor(app) {
-      this.app = app;
-      this.isInitialized = false;
-      this.sounds = {};
-      this.activeSoundscape = null;
-      this.tickingLoop = null;
-  }
+    constructor(app) {
+        this.app = app;
+        this.isInitialized = false; // Is the audio context and synths ready?
+        this.isInitializing = false; // Are we currently trying to initialize?
+        this.sounds = {};
+        this.activeSoundscape = null;
+        this.tickingLoop = null;
+    }
 
-  async init() {
-      if (this.isInitialized || typeof Tone === 'undefined') return;
-      await Tone.start();
-      console.log('🔊 Audio context started.');
+    // This is the single point of entry for audio initialization.
+    // It's called by the user's first interaction that requires sound.
+    async init() {
+        // If already initialized, we're done.
+        if (this.isInitialized) return true;
+        // If currently initializing, wait for it to finish.
+        if (this.isInitializing) return false;
+        // If Tone.js script didn't load, we can never initialize.
+        if (typeof Tone === 'undefined') {
+            console.warn('Tone.js is not loaded. Audio features will be disabled.');
+            return false;
+        }
 
-      // Synthesizer for the 'complete' sound
-      this.sounds.complete = new Tone.Synth({
-          oscillator: { type: 'sine' },
-          envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 },
-      }).toDestination();
+        this.isInitializing = true;
+        try {
+            await Tone.start();
+            console.log('🔊 Audio context started.');
 
-      // Noise generators for soundscapes
-      this.sounds.rain = new Tone.Noise('pink').toDestination();
-      this.sounds.rain.volume.value = -20;
-      
-      this.sounds.whiteNoise = new Tone.Noise('white').toDestination();
-      this.sounds.whiteNoise.volume.value = -20;
+            // Synthesizer for the 'complete' sound
+            this.sounds.complete = new Tone.Synth({
+                oscillator: { type: 'sine' },
+                envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 },
+            }).toDestination();
 
-      this.sounds.brownNoise = new Tone.Noise('brown').toDestination();
-      this.sounds.brownNoise.volume.value = -16;
+            // Noise generators for soundscapes
+            this.sounds.rain = new Tone.Noise('pink').toDestination();
+            this.sounds.rain.volume.value = -20;
+            
+            this.sounds.whiteNoise = new Tone.Noise('white').toDestination();
+            this.sounds.whiteNoise.volume.value = -20;
 
-      // Synthesizer for the ticking clock
-      this.sounds.tick = new Tone.MembraneSynth({
-          pitchDecay: 0.008,
-          octaves: 2,
-          envelope: { attack: 0.001, decay: 0.2, sustain: 0 },
-      }).toDestination();
-      this.sounds.tick.volume.value = -18;
+            this.sounds.brownNoise = new Tone.Noise('brown').toDestination();
+            this.sounds.brownNoise.volume.value = -16;
 
-      this.isInitialized = true;
-  }
+            // Synthesizer for the ticking clock
+            this.sounds.tick = new Tone.MembraneSynth({
+                pitchDecay: 0.008,
+                octaves: 2,
+                envelope: { attack: 0.001, decay: 0.2, sustain: 0 },
+            }).toDestination();
+            this.sounds.tick.volume.value = -18;
 
-  playSound(soundName) {
-      if (!this.app.settings.soundEnabled || !this.sounds[soundName]) return;
-      if (soundName === 'complete') {
-          this.sounds.complete.triggerAttackRelease('C5', '8n');
-      }
-  }
+            this.isInitialized = true; // Set flag only on successful initialization
+            return true;
+        } catch (e) {
+            console.error("Failed to initialize Tone.js AudioContext:", e);
+            return false;
+        } finally {
+            this.isInitializing = false;
+        }
+    }
 
-  startTicking() {
-      if (!this.app.settings.soundEnabled || !this.app.settings.tickingEnabled || this.tickingLoop) return;
-      this.tickingLoop = new Tone.Loop(time => {
-          this.sounds.tick.triggerAttackRelease('C4', '32n', time);
-      }, '1s').start(0);
-      Tone.Transport.start();
-  }
+    // Guard every public method with a check for initialization.
+    playSound(soundName) {
+        if (!this.isInitialized || !this.app.settings.soundEnabled || !this.sounds[soundName]) return;
+        
+        if (soundName === 'complete' && this.sounds.complete) {
+            this.sounds.complete.triggerAttackRelease('C5', '8n', Tone.now());
+        }
+    }
 
-  stopTicking() {
-      if (this.tickingLoop) {
-          this.tickingLoop.stop(0).dispose();
-          this.tickingLoop = null;
-          if (!this.activeSoundscape) {
-              Tone.Transport.stop();
-          }
-      }
-  }
+    startTicking() {
+        if (!this.isInitialized || !this.app.settings.soundEnabled || !this.app.settings.tickingEnabled || this.tickingLoop) return;
+        
+        this.tickingLoop = new Tone.Loop(time => {
+            if (this.sounds.tick) {
+                this.sounds.tick.triggerAttackRelease('C4', '32n', time);
+            }
+        }, '1s').start(0);
+        Tone.Transport.start();
+    }
 
-  startSoundscape() {
-      this.stopSoundscape(); // Stop any current soundscape first
-      const type = this.app.settings.soundscape;
-      if (!this.app.settings.soundEnabled || type === 'none' || !this.sounds[type]) return;
+    stopTicking() {
+        if (!this.isInitialized || !this.tickingLoop) return;
+        
+        this.tickingLoop.stop(0).dispose();
+        this.tickingLoop = null;
+        if (!this.activeSoundscape) {
+            Tone.Transport.stop();
+        }
+    }
 
-      this.activeSoundscape = this.sounds[type];
-      this.activeSoundscape.start();
-      Tone.Transport.start();
-  }
+    startSoundscape() {
+        if (!this.isInitialized) return;
+        this.stopSoundscape(); 
+        const type = this.app.settings.soundscape;
+        if (!this.app.settings.soundEnabled || type === 'none' || !this.sounds[type]) return;
 
-  stopSoundscape() {
-      if (this.activeSoundscape) {
-          this.activeSoundscape.stop();
-          this.activeSoundscape = null;
-          if (!this.tickingLoop) {
-              Tone.Transport.stop();
-          }
-      }
-  }
+        this.activeSoundscape = this.sounds[type];
+        this.activeSoundscape.start();
+        Tone.Transport.start();
+    }
+
+    stopSoundscape() {
+        if (!this.isInitialized || !this.activeSoundscape) return;
+        
+        this.activeSoundscape.stop();
+        this.activeSoundscape = null;
+        if (!this.tickingLoop) {
+            Tone.Transport.stop();
+        }
+    }
 }
+
 
 /* ───────────────────────── Auth UI Manager ─────────────────────── */
 class AuthManager {
@@ -177,8 +205,8 @@ export class FocusMatrixCloud {
       longBreakDuration: 30,
       sessionsPerCycle: 4,
       goals: [],
-      soundscape: 'none', // NEW
-      tickingEnabled: false, // NEW
+      soundscape: 'none',
+      tickingEnabled: false,
     };
     this.stats = { tasksAddedToday: 0, tasksCompletedToday: 0, tasksEliminatedToday: 0, focusSessionsToday: 0, dailyStreak: 0, focusStreak: 0, totalEliminated: 0, lastUsedDate: null, achievements: { firstStep: false, focusStarter: false, goodJudgment: false } };
     this.user = null;
@@ -188,7 +216,7 @@ export class FocusMatrixCloud {
     this.focusMode = false;
     this.progressMode = false;
     this.authManager = new AuthManager(this);
-    this.audioManager = new AudioManager(this); // NEW
+    this.audioManager = new AudioManager(this);
     this.focusedTask = null;
 
     this.handleLogout = async () => {
@@ -267,43 +295,6 @@ export class FocusMatrixCloud {
     this.updateEmptyStates();
   }
 
-  /* ====================== NEW: FOCUS LOOP FEATURES ====================== */
-  
-  /**
-   * Starts a focus session on the first available task in a given quadrant.
-   * @param {number} quadrantNumber The quadrant to focus on (1-4).
-   */
-  startFocusOnQuadrant(quadrantNumber) {
-    const taskToFocus = this.tasks.find(t => t.quadrant === quadrantNumber);
-    if (taskToFocus) {
-      this.startFocusOnTask(taskToFocus);
-    } else {
-      this.showFeedback(`Quadrant ${quadrantNumber} has no tasks to focus on.`, 'info');
-    }
-  }
-
-  /**
-   * Initiates a focus session for a specific task.
-   * @param {object} task The task object to focus on.
-   */
-  startFocusOnTask(task) {
-    this.focusedTask = task;
-    
-    // Update the timer UI with the task text
-    document.getElementById('timerTaskText').textContent = task.text;
-    
-    // Highlight the quadrant
-    const matrixContainer = document.getElementById('matrixContainer');
-    matrixContainer.classList.add('focus-active');
-    document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('is-focus-target'));
-    document.querySelector(`.quadrant[data-quadrant="${task.quadrant}"]`).classList.add('is-focus-target');
-    
-    // Start the timer
-    this.setTimerMode('focus', true);
-    this.toggleFocusMode(); // Show the timer overlay
-    this.startTimer();
-  }
-
   /* ====================== FOCUS LOOP FEATURES ====================== */
   startFocusOnQuadrant(quadrantNumber) {
     const taskToFocus = this.tasks.find(t => t.quadrant === quadrantNumber);
@@ -332,9 +323,6 @@ export class FocusMatrixCloud {
     this.audioManager.stopTicking();
   }
 
-  /**
-   * Shows the triage modal after a focus session.
-   */
   showTriageModal() {
     const modal = document.getElementById('triageModal');
     if (!this.focusedTask) return;
@@ -364,6 +352,31 @@ export class FocusMatrixCloud {
   }
 
   /* ====================== TIMER LOGIC (MODIFIED) ====================== */
+  async startTimer() {
+    if (this.timerRunning) return;
+    const audioReady = await this.audioManager.init();
+    this.timerRunning = true;
+    document.getElementById('startTimer').style.display = 'none';
+    document.getElementById('pauseTimer').style.display = 'inline-block';
+    if (audioReady && this.timerMode === 'focus') {
+        this.audioManager.startTicking();
+    }
+    this.focusTimer = setInterval(() => {
+      if (!this.timerRunning) return;
+      this.timeRemaining = Math.max(0, this.timeRemaining - 1);
+      this.updateTimerDisplay();
+      if (this.timeRemaining === 0) this.timerComplete();
+    }, 1000);
+  }
+
+  pauseTimer() {
+    if (!this.timerRunning) return;
+    clearInterval(this.focusTimer);
+    this.timerRunning = false;
+    document.getElementById('startTimer').style.display = 'inline-block';
+    document.getElementById('pauseTimer').style.display = 'none';
+    this.audioManager.stopTicking();
+  }
   
   timerComplete() {
     this.pauseTimer();
@@ -384,7 +397,6 @@ export class FocusMatrixCloud {
   }
 
   /* ====================== MODES & DASHBOARD (MODIFIED) ====================== */
-  
   toggleFocusMode() {
     this.focusMode = !this.focusMode;
     document.body.classList.toggle('focus-mode', this.focusMode);
@@ -394,156 +406,15 @@ export class FocusMatrixCloud {
       this.endFocusSession();
     }
   }
-  
-  /* ====================== Persistence helpers ====================== */
-  get isOnline() { 
-    return navigator.onLine && !!this.user; 
-  }
 
-  /* ---------- TASKS ---------- */
-  async loadTasks() {
-    if (this.isOnline) {
-      const { data, error } = await supabase.from('tasks').select('*').eq('user_id', this.user.id).order('created_at');
-      if (error) {
-        this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]');
-        return;
-      }
-      this.tasks = (data || []).map(dbTask => ({
-        id: `task_${dbTask.id}`,
-        database_id: dbTask.id,
-        text: dbTask.text,
-        quadrant: dbTask.quadrant,
-        goal: dbTask.goal || null,
-        created_at: dbTask.created_at
-      }));
-    } else {
-      this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]');
-    }
-  }
-
-  async saveTasks() {
-    if (this.isOnline) {
-        const newTasks = this.tasks.filter(t => !t.database_id);
-        const existingTasks = this.tasks.filter(t => t.database_id);
-        if (newTasks.length > 0) {
-          const insertData = newTasks.map(t => ({ user_id: this.user.id, text: t.text, quadrant: t.quadrant, goal: t.goal, created_at: t.created_at, updated_at: new Date().toISOString() }));
-          const { data: insertedTasks, error: insertError } = await supabase.from('tasks').insert(insertData).select();
-          if (!insertError && insertedTasks) {
-            insertedTasks.forEach((dbTask, index) => {
-              const localTask = newTasks[index];
-              if (localTask) localTask.database_id = dbTask.id;
-            });
-          }
-        }
-        if (existingTasks.length > 0) {
-          const updates = existingTasks.map(t => ({ id: t.database_id, user_id: this.user.id, text: t.text, quadrant: t.quadrant, goal: t.goal, updated_at: new Date().toISOString() }));
-          await supabase.from('tasks').upsert(updates);
-        }
-    }
-    localStorage.setItem('focusmatrix_ultimate_tasks', JSON.stringify(this.tasks));
-  }
-
-  /* ---------- SETTINGS & STATS (unchanged) ---------- */
-  async loadSettings() {
-    const defaults = this.settings;
-    if (this.isOnline) {
-      try {
-        const { data, error } = await supabase.from('settings').select('data').eq('user_id', this.user?.id).single();
-        if (error && error.code !== 'PGRST116') console.error('Error loading settings:', error);
-        const cloud = data?.data || {};
-        const local = JSON.parse(localStorage.getItem('focusmatrix_ultimate_settings') || '{}');
-        this.settings = { ...defaults, ...cloud, ...local };
-      } catch (error) {
-        this.settings = { ...defaults, ...JSON.parse(localStorage.getItem('focusmatrix_ultimate_settings') || '{}') };
-      }
-    } else {
-      this.settings = { ...defaults, ...JSON.parse(localStorage.getItem('focusmatrix_ultimate_settings') || '{}') };
-    }
-  }
-
-  async saveSettings() {
-    if (this.isOnline) {
-      await supabase.from('settings').upsert({ user_id: this.user.id, data: this.settings });
-    }
-    localStorage.setItem('focusmatrix_ultimate_settings', JSON.stringify(this.settings));
-    this.updateGoalSelect();
-  }
-
-  async loadStats() {
-    const today = new Date().toISOString().split('T')[0];
-    if (this.isOnline) {
-        const { data, error } = await supabase.from('daily_stats').select('*').eq('user_id', this.user.id).eq('day', today).single();
-        if (error && error.code !== 'PGRST116') console.error('Error loading stats:', error);
-        if (data) {
-          this.stats = { ...this.stats, ...data, tasksAddedToday: data.tasks_added || 0, tasksCompletedToday: data.tasks_completed || 0, tasksEliminatedToday: data.tasks_eliminated || 0, focusSessionsToday: data.focus_sessions || 0, lastUsedDate: today, day: today };
-        } else {
-          this.stats.tasksAddedToday = 0; this.stats.tasksCompletedToday = 0; this.stats.tasksEliminatedToday = 0; this.stats.focusSessionsToday = 0; this.stats.lastUsedDate = today; this.stats.day = today;
-        }
-    } else {
-      this.stats = JSON.parse(localStorage.getItem('focusmatrix_ultimate_stats') || '{}') || { ...this.stats };
-      if (this.stats.day !== today) this.stats = { ...this.stats, day: today };
-    }
-  }
-
-  async saveStats() {
-    if (this.isOnline) {
-        const today = new Date().toISOString().split('T')[0];
-        await supabase.from('daily_stats').upsert({ user_id: this.user.id, day: today, tasks_added: this.stats.tasksAddedToday || 0, tasks_completed: this.stats.tasksCompletedToday || 0, tasks_eliminated: this.stats.tasksEliminatedToday || 0, focus_sessions: this.stats.focusSessionsToday || 0 }, { onConflict: 'user_id,day' });
-    }
-    localStorage.setItem('focusmatrix_ultimate_stats', JSON.stringify(this.stats));
-  }
-
-  bindSettingsEvents() {
-    ['settingsOverlay', 'closeSettings', 'cancelSettings'].forEach(id =>
-      document.getElementById(id).addEventListener('click', () => this.closeSettings())
-    );
-    document.getElementById('saveSettings').addEventListener('click', () => this.saveSettingsFromModal());
-    document.getElementById('resetSettings').addEventListener('click', () => this.resetSettings());
-    document.getElementById('fontSizeSlider').addEventListener('input', e =>
-      document.getElementById('fontSizeValue').textContent = e.target.value + 'px'
-    );
-  }
-
-  updateGoalSelect() {
-    const sel = document.getElementById('goalSelect');
-    if (!sel) return;
-    sel.innerHTML = '';
-    const none = document.createElement('option');
-    none.value = '';
-    none.textContent = 'No goal';
-    sel.appendChild(none);
-    this.settings.goals.forEach(g => {
-      const o = document.createElement('option');
-      o.value = g;
-      o.textContent = g;
-      sel.appendChild(o);
-    });
-    sel.style.display = this.settings.goals.length ? 'block' : 'none';
-  }
-
-  async handleAddTask() {
-    const input = document.getElementById('taskInput');
-    const raw = input.value.trim();
-    if (!raw) {
-      this.showFeedback('Please enter a task', 'error');
-      return;
-    }
-    const goalVal = document.getElementById('goalSelect')?.value || null;
-    const task = {
-      id: `task_${Date.now()}`,
-      text: this.sanitizeText(raw),
-      quadrant: 1,
-      goal: goalVal,
-      created_at: new Date().toISOString()
-    };
-    this.tasks.push(task);
-    await this.saveTasks();
-    this.stats.tasksAddedToday++;
-    await this.saveStats();
-    this.renderTask(task);
-    this.updateDashboard();
-    input.value = '';
-    input.focus();
+  /* ====================== SETTINGS (MODIFIED) ====================== */
+  applySettings() {
+    document.documentElement.style.setProperty('--font-size-base', this.settings.fontSize + 'px');
+    const s = { none: '0s', slow: '0.5s', normal: '0.2s', fast: '0.1s' };
+    document.documentElement.style.setProperty('--transition-speed', s[this.settings.animationSpeed] || '0.2s');
+    this.setTimerMode(this.timerMode, true);
+    if (this.focusMode) { this.audioManager.startSoundscape(); }
+    else { this.audioManager.stopSoundscape(); }
   }
 
   populateSettingsModal() {
@@ -556,7 +427,6 @@ export class FocusMatrixCloud {
     document.getElementById('longBreakDuration').value = this.settings.longBreakDuration;
     document.getElementById('sessionsPerCycle').value = this.settings.sessionsPerCycle;
     document.getElementById('achievementsEnabled').checked = this.settings.achievementsEnabled;
-    // NEW Audio settings
     document.getElementById('soundEnabled').checked = this.settings.soundEnabled;
     document.getElementById('soundscapeSelect').value = this.settings.soundscape;
     document.getElementById('tickingClockEnabled').checked = this.settings.tickingEnabled;
@@ -572,7 +442,6 @@ export class FocusMatrixCloud {
     this.settings.longBreakDuration = parseInt(document.getElementById('longBreakDuration').value, 10);
     this.settings.sessionsPerCycle = parseInt(document.getElementById('sessionsPerCycle').value, 10);
     this.settings.achievementsEnabled = document.getElementById('achievementsEnabled').checked;
-    // NEW Audio settings
     this.settings.soundEnabled = document.getElementById('soundEnabled').checked;
     this.settings.soundscape = document.getElementById('soundscapeSelect').value;
     this.settings.tickingEnabled = document.getElementById('tickingClockEnabled').checked;
@@ -588,65 +457,31 @@ export class FocusMatrixCloud {
       this.audioManager.playSound(soundName);
   }
 
+  /* ====================== UNCHANGED METHODS ====================== */
+  get isOnline() { return navigator.onLine && !!this.user; }
+  async loadTasks() { if (this.isOnline) { const { data, error } = await supabase.from('tasks').select('*').eq('user_id', this.user.id).order('created_at'); if (error) { this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]'); return; } this.tasks = (data || []).map(dbTask => ({ id: `task_${dbTask.id}`, database_id: dbTask.id, text: dbTask.text, quadrant: dbTask.quadrant, goal: dbTask.goal || null, created_at: dbTask.created_at })); } else { this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]'); } }
+  async saveTasks() { if (this.isOnline) { const newTasks = this.tasks.filter(t => !t.database_id); const existingTasks = this.tasks.filter(t => t.database_id); if (newTasks.length > 0) { const insertData = newTasks.map(t => ({ user_id: this.user.id, text: t.text, quadrant: t.quadrant, goal: t.goal, created_at: t.created_at, updated_at: new Date().toISOString() })); const { data: insertedTasks, error: insertError } = await supabase.from('tasks').insert(insertData).select(); if (!insertError && insertedTasks) { insertedTasks.forEach((dbTask, index) => { const localTask = newTasks[index]; if (localTask) localTask.database_id = dbTask.id; }); } } if (existingTasks.length > 0) { const updates = existingTasks.map(t => ({ id: t.database_id, user_id: this.user.id, text: t.text, quadrant: t.quadrant, goal: t.goal, updated_at: new Date().toISOString() })); await supabase.from('tasks').upsert(updates); } } localStorage.setItem('focusmatrix_ultimate_tasks', JSON.stringify(this.tasks)); }
+  async loadSettings() { const defaults = this.settings; if (this.isOnline) { try { const { data, error } = await supabase.from('settings').select('data').eq('user_id', this.user?.id).single(); if (error && error.code !== 'PGRST116') console.error('Error loading settings:', error); const cloud = data?.data || {}; const local = JSON.parse(localStorage.getItem('focusmatrix_ultimate_settings') || '{}'); this.settings = { ...defaults, ...cloud, ...local }; } catch (error) { this.settings = { ...defaults, ...JSON.parse(localStorage.getItem('focusmatrix_ultimate_settings') || '{}') }; } } else { this.settings = { ...defaults, ...JSON.parse(localStorage.getItem('focusmatrix_ultimate_settings') || '{}') }; } }
+  async saveSettings() { if (this.isOnline) { await supabase.from('settings').upsert({ user_id: this.user.id, data: this.settings }); } localStorage.setItem('focusmatrix_ultimate_settings', JSON.stringify(this.settings)); this.updateGoalSelect(); }
+  async loadStats() { const today = new Date().toISOString().split('T')[0]; if (this.isOnline) { const { data, error } = await supabase.from('daily_stats').select('*').eq('user_id', this.user.id).eq('day', today).single(); if (error && error.code !== 'PGRST116') console.error('Error loading stats:', error); if (data) { this.stats = { ...this.stats, ...data, tasksAddedToday: data.tasks_added || 0, tasksCompletedToday: data.tasks_completed || 0, tasksEliminatedToday: data.tasks_eliminated || 0, focusSessionsToday: data.focus_sessions || 0, lastUsedDate: today, day: today }; } else { this.stats.tasksAddedToday = 0; this.stats.tasksCompletedToday = 0; this.stats.tasksEliminatedToday = 0; this.stats.focusSessionsToday = 0; this.stats.lastUsedDate = today; this.stats.day = today; } } else { this.stats = JSON.parse(localStorage.getItem('focusmatrix_ultimate_stats') || '{}') || { ...this.stats }; if (this.stats.day !== today) this.stats = { ...this.stats, day: today }; } }
+  async saveStats() { if (this.isOnline) { const today = new Date().toISOString().split('T')[0]; await supabase.from('daily_stats').upsert({ user_id: this.user.id, day: today, tasks_added: this.stats.tasksAddedToday || 0, tasks_completed: this.stats.tasksCompletedToday || 0, tasks_eliminated: this.stats.tasksEliminatedToday || 0, focus_sessions: this.stats.focusSessionsToday || 0 }, { onConflict: 'user_id,day' }); } localStorage.setItem('focusmatrix_ultimate_stats', JSON.stringify(this.stats)); }
+  bindSettingsEvents() { ['settingsOverlay', 'closeSettings', 'cancelSettings'].forEach(id => document.getElementById(id).addEventListener('click', () => this.closeSettings())); document.getElementById('saveSettings').addEventListener('click', () => this.saveSettingsFromModal()); document.getElementById('resetSettings').addEventListener('click', () => this.resetSettings()); document.getElementById('fontSizeSlider').addEventListener('input', e => document.getElementById('fontSizeValue').textContent = e.target.value + 'px'); }
+  updateGoalSelect() { const sel = document.getElementById('goalSelect'); if (!sel) return; sel.innerHTML = ''; const none = document.createElement('option'); none.value = ''; none.textContent = 'No goal'; sel.appendChild(none); this.settings.goals.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; sel.appendChild(o); }); sel.style.display = this.settings.goals.length ? 'block' : 'none'; }
+  async handleAddTask() { const input = document.getElementById('taskInput'); const raw = input.value.trim(); if (!raw) { this.showFeedback('Please enter a task', 'error'); return; } const goalVal = document.getElementById('goalSelect')?.value || null; const task = { id: `task_${Date.now()}`, text: this.sanitizeText(raw), quadrant: 1, goal: goalVal, created_at: new Date().toISOString() }; this.tasks.push(task); await this.saveTasks(); this.stats.tasksAddedToday++; await this.saveStats(); this.renderTask(task); this.updateDashboard(); input.value = ''; input.focus(); }
   handleDragOver(e) { e.preventDefault(); }
   handleDragEnter(e) { e.target.closest('.task-list')?.classList.add('drag-over'); }
   handleDragLeave(e) { e.target.closest('.task-list')?.classList.remove('drag-over'); }
-
-  async handleDrop(e) {
-    e.preventDefault();
-    const list = e.target.closest('.task-list');
-    if (!list || !this.draggedTask) return;
-    const quad = parseInt(list.closest('.quadrant').dataset.quadrant);
-    if (this.draggedTask.quadrant === quad) return;
-    this.draggedTask.quadrant = quad;
-    await this.saveTasks();
-    this.renderAllTasks();
-    if (quad === 4) this.handleQuadrant4(this.draggedTask);
-  }
-
+  async handleDrop(e) { e.preventDefault(); const list = e.target.closest('.task-list'); if (!list || !this.draggedTask) return; const quad = parseInt(list.closest('.quadrant').dataset.quadrant); if (this.draggedTask.quadrant === quad) return; this.draggedTask.quadrant = quad; await this.saveTasks(); this.renderAllTasks(); if (quad === 4) this.handleQuadrant4(this.draggedTask); }
   handleTouchStart(e) { this.touchStartX = e.touches[0].clientX; this.touchStartY = e.touches[0].clientY; this.touchStartTime = Date.now(); }
   handleTouchMove(e, el) { const dx = e.touches[0].clientX - this.touchStartX; if (Math.abs(dx) < 10) return; el.style.transform = `translateX(${dx}px)`; if (dx < -this.swipeThreshold) el.classList.add('swipe-left'); else el.classList.remove('swipe-left'); }
   handleTouchEnd(e, task, el) { const dx = e.changedTouches[0].clientX - this.touchStartX; const dy = e.changedTouches[0].clientY - this.touchStartY; const elapsed = Date.now() - this.touchStartTime; el.style.transform = ''; el.classList.remove('swipe-left'); if (elapsed < this.tapThreshold && Math.abs(dx) < 10 && Math.abs(dy) < 10) { this.editTask(task); return; } if (dx < -this.swipeThreshold) this.deleteTask(task.id, true); }
-
   updateEmptyStates() { document.querySelectorAll('.quadrant').forEach(q => { const list = q.querySelector('.task-list'); let es = q.querySelector('.empty-state'); if (!list.children.length) { if (!es) { es = document.createElement('div'); es.className = 'empty-state'; es.textContent = 'Drag tasks here'; list.appendChild(es); } } else { es?.remove(); } }); }
   renderAllTasks() { document.querySelectorAll('.task-list').forEach(l => l.innerHTML = ''); this.tasks.forEach(t => this.renderTask(t)); this.updateEmptyStates(); }
-
   bindTimerEvents() { document.getElementById('startTimer').addEventListener('click', () => this.startTimer()); document.getElementById('pauseTimer').addEventListener('click', () => this.pauseTimer()); document.getElementById('resetTimer').addEventListener('click', () => this.resetTimer()); document.getElementById('exitFocus').addEventListener('click', () => this.toggleFocusMode()); document.getElementById('phaseFocus').addEventListener('click', () => this.setTimerMode('focus')); document.getElementById('phaseShortBreak').addEventListener('click', () => this.setTimerMode('shortBreak')); document.getElementById('phaseLongBreak').addEventListener('click', () => this.setTimerMode('longBreak')); }
-  async startTimer() {
-    if (this.timerRunning) return;
-    await this.audioManager.init(); // Ensure audio is ready
-    this.timerRunning = true;
-    document.getElementById('startTimer').style.display = 'none';
-    document.getElementById('pauseTimer').style.display = 'inline-block';
-    if (this.timerMode === 'focus') {
-        this.audioManager.startTicking();
-    }
-    this.focusTimer = setInterval(() => {
-      if (!this.timerRunning) return;
-      this.timeRemaining = Math.max(0, this.timeRemaining - 1);
-      this.updateTimerDisplay();
-      if (this.timeRemaining === 0) this.timerComplete();
-    }, 1000);
-  }  pauseTimer() {
-    if (!this.timerRunning) return;
-    clearInterval(this.focusTimer);
-    this.timerRunning = false;
-    document.getElementById('startTimer').style.display = 'inline-block';
-    document.getElementById('pauseTimer').style.display = 'none';
-    this.audioManager.stopTicking();
-  }
   resetTimer() { this.pauseTimer(); this.currentCycle = 1; this.setTimerMode('focus', true); }
   updateTimerDisplay() { const m = String(Math.floor(this.timeRemaining / 60)).padStart(2, '0'); const s = String(this.timeRemaining % 60).padStart(2, '0'); document.getElementById('timerDisplay').textContent = `${m}:${s}`; }
   setTimerMode(mode, forceReset = false) { if (!forceReset && this.timerRunning) { if (!confirm('A timer is running. Are you sure you want to switch?')) return; } this.pauseTimer(); this.timerMode = mode; const timerDisplay = document.getElementById('timerDisplay'); const timerSessionTitle = document.getElementById('timerSessionTitle'); const timerSessionCount = document.getElementById('timerSessionCount'); document.querySelectorAll('.phase-btn').forEach(btn => btn.classList.remove('active')); switch (mode) { case 'focus': this.timeRemaining = this.settings.focusDuration * 60; timerDisplay.classList.remove('break-mode'); timerDisplay.classList.add('focus-mode'); document.getElementById('phaseFocus').classList.add('active'); timerSessionTitle.textContent = 'Time to Focus!'; timerSessionCount.textContent = `Session ${this.currentCycle} of ${this.settings.sessionsPerCycle}`; break; case 'shortBreak': this.timeRemaining = this.settings.shortBreakDuration * 60; timerDisplay.classList.remove('focus-mode'); timerDisplay.classList.add('break-mode'); document.getElementById('phaseShortBreak').classList.add('active'); timerSessionTitle.textContent = 'Short Break'; timerSessionCount.textContent = 'Relax and recharge'; break; case 'longBreak': this.timeRemaining = this.settings.longBreakDuration * 60; timerDisplay.classList.remove('focus-mode'); timerDisplay.classList.add('break-mode'); document.getElementById('phaseLongBreak').classList.add('active'); timerSessionTitle.textContent = 'Long Break'; timerSessionCount.textContent = 'Take a well-deserved rest'; break; } this.updateTimerDisplay(); }
   toggleProgressDashboard() { this.progressMode = !this.progressMode; document.getElementById('progressDashboard').style.display = this.progressMode ? 'block' : 'none'; document.getElementById('progressToggle').classList.toggle('active', this.progressMode); if (this.progressMode) this.updateDashboard(); }
-  applySettings() {
-    document.documentElement.style.setProperty('--font-size-base', this.settings.fontSize + 'px');
-    const s = { none: '0s', slow: '0.5s', normal: '0.2s', fast: '0.1s' };
-    document.documentElement.style.setProperty('--transition-speed', s[this.settings.animationSpeed] || '0.2s');
-    this.setTimerMode(this.timerMode, true);
-    if (this.focusMode) { this.audioManager.startSoundscape(); }
-    else { this.audioManager.stopSoundscape(); }
-  }
   openSettings() { this.populateSettingsModal(); document.getElementById('settingsModal').classList.add('show'); }
   closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
   resetSettings() { if (!confirm('Reset settings to defaults?')) return; localStorage.removeItem('focusmatrix_ultimate_settings'); window.location.reload(); }
@@ -664,7 +499,6 @@ export class FocusMatrixCloud {
   handleKeyboard(e) {}
   setupAccessibility() {}
   requestNotificationPermission() { if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') { Notification.requestPermission().then(permission => { if (permission === 'granted') { this.showFeedback('Notifications enabled!', 'success'); } }); } }
-  playSound(soundName) { if (!this.settings.soundEnabled) return; console.log(`Playing sound: ${soundName}`); }
   announceToScreenReader() {}
   editTask(task) { const el = document.querySelector(`[data-task-id="${task.id}"]`); if (!el) return; const taskTextEl = el.querySelector('.task-text'); const currentText = task.text; const input = document.createElement('input'); input.type = 'text'; input.value = currentText; input.className = 'task-edit-input'; input.maxLength = 200; taskTextEl.innerHTML = ''; taskTextEl.appendChild(input); input.focus(); input.select(); const saveEdit = async () => { const newText = this.sanitizeText(input.value.trim()); if (newText && newText !== currentText) { task.text = newText; await this.saveTasks(); this.showFeedback('Task updated!', 'success'); } this.renderAllTasks(); }; const cancelEdit = () => { this.renderAllTasks(); }; input.addEventListener('blur', saveEdit); input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveEdit(); } else if (e.key === 'Escape') { e.preventDefault(); cancelEdit(); } }); }
   handleQuadrant4(task) { setTimeout(() => { if (confirm(`Let go of "${task.text}"?`)) { this.deleteTask(task.id); } }, 300); }
