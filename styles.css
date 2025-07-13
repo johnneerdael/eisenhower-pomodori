@@ -329,35 +329,22 @@ body.focus-mode #focusTimer { display: flex; }
 
 /* --- Styling for the main Add Task button --- */
 #addTaskBtn {
-	/* Applying base .btn styles */
-	position: relative;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.35rem;
-	padding: 0.6rem 1.25rem;
-	border: 0;
-	border-radius: 9999px; /* pill */
-	font-size: var(--font-size-base);
+	background: var(--secondary-bg);
+	color: var(--text-primary);
+	border: 2px solid var(--border-color);
+	border-radius: var(--border-radius); /* Matches other buttons */
+	padding: 0 var(--spacing-md);
 	font-weight: 600;
-	letter-spacing: 0.03em;
-	line-height: 1;
 	cursor: pointer;
-	user-select: none;
-	transition: background var(--transition-speed) ease, transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
-	min-width: 120px;
-  
-	/* Applying .btn-primary styles */
-	background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
-	color: #fff;
-	box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+	transition: all var(--transition-speed) ease;
   }
   
   #addTaskBtn:hover,
   #addTaskBtn:focus {
-	/* Applying .btn-primary:hover styles */
-	transform: translateY(-2px);
-	box-shadow: 0 6px 18px rgba(99,102,241,0.45);
+	background: var(--primary-bg);
+	border-color: var(--accent-start, #3b82f6); /* Use accent color on hover */
+	transform: translateY(-1px);
+	box-shadow: var(--shadow-md);
   }
 
 .matrix-grid {
