@@ -6,7 +6,7 @@
 	<dict>
 		<key>App.debug.dylib</key>
 		<data>
-		HZxKyrw6Xzb7dSS0W55RUgWcwp0=
+		pE6H3oLO2ee4wzi/EAYQJ1fxtmg=
 		</data>
 		<key>AppIcon60x60@2x.png</key>
 		<data>
@@ -42,7 +42,7 @@
 		</data>
 		<key>Frameworks/Capacitor.framework/Capacitor</key>
 		<data>
-		N1SuYxpluQM/vvUFtpFiCd9hpvo=
+		o6EFti2/3aGvnmKqYLCNbfiG9Jg=
 		</data>
 		<key>Frameworks/Capacitor.framework/Info.plist</key>
 		<data>
@@ -62,7 +62,7 @@
 		</data>
 		<key>Frameworks/CapacitorApp.framework/CapacitorApp</key>
 		<data>
-		6DBrrZ+Ce3S/4rv3V4NzLP8S8MM=
+		NXUeKwbSTp+XjbszANqhYn+IIUA=
 		</data>
 		<key>Frameworks/CapacitorApp.framework/Info.plist</key>
 		<data>
@@ -74,7 +74,7 @@
 		</data>
 		<key>Frameworks/Cordova.framework/Cordova</key>
 		<data>
-		pP5sCdQm2EyZy46YVYqtw73zFgU=
+		4g9D7WQfhRoWoC7QtrBf7CGeCg4=
 		</data>
 		<key>Frameworks/Cordova.framework/Info.plist</key>
 		<data>
@@ -98,7 +98,7 @@
 		</data>
 		<key>__preview.dylib</key>
 		<data>
-		i7kPvC6O+h246M/czK09DlbLdkU=
+		7/EcycRVNBHOoc7wbXcPDNkf6tE=
 		</data>
 		<key>capacitor.config.json</key>
 		<data>
@@ -147,7 +147,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			55EXiZtMNmHgjIApIzNDqxn/TdFwq1+tEh5IyPCaiAQ=
+			6Hc0a5mp9BxwOuAQWod9bnnLF/DC8XKHgYXaXvmLBSQ=
 			</data>
 		</dict>
 		<key>AppIcon60x60@2x.png</key>
@@ -210,7 +210,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			rhMe98+o8S81jv4BniYUvYLPG4SXL4PPQXBrDUS6Ae4=
+			PMzBH2ug1ZKvWuZCm4S8fn28XcMRkqXxMUNxDo0097M=
 			</data>
 		</dict>
 		<key>Frameworks/Capacitor.framework/Info.plist</key>
@@ -245,7 +245,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			+hf8C5tH5U5jN+P47lzPw7nsvmSezVRrqFKa9BWUj7E=
+			JQJG7o/V3nH8opygrqWPnKrI24Xk+kbISihuU5CnfuU=
 			</data>
 		</dict>
 		<key>Frameworks/CapacitorApp.framework/Info.plist</key>
@@ -266,7 +266,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			MTCbullZg7newKgUUoDUbRXG/f1YgO4+p4U9x4kZZoI=
+			6DYWJwHG0lXmPLRntjAmk2IT84gJjvZsp6edxl+PPdc=
 			</data>
 		</dict>
 		<key>Frameworks/Cordova.framework/Info.plist</key>
@@ -294,7 +294,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			MF7sYlZoAcdMEH8amq4YZnIL4Dd0TvqTMsjEbWJGXJ4=
+			+Q6Tx1oE85zfOKcf5EZbf2Gb9ST1NVCJvb4XeFML6mA=
 			</data>
 		</dict>
 		<key>capacitor.config.json</key>
