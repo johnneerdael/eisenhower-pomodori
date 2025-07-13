@@ -757,11 +757,13 @@ export class FocusMatrixCloud {
 
   toggleFocusMode() {
     this.focusMode = !this.focusMode;
+    // Toggle a class on the body. The new CSS rules will handle the rest.
     document.body.classList.toggle('focus-mode', this.focusMode);
-    document.getElementById('focusToggle').classList.toggle('active', this.focusMode);
-    const tc = document.getElementById('focusTimer');
-    if (tc) tc.style.display = this.focusMode ? 'block' : 'none';
-    if (!this.focusMode && this.timerRunning) this.pauseTimer();
+
+    // If the timer is running and we're exiting focus mode, pause it.
+    if (!this.focusMode && this.timerRunning) {
+      this.pauseTimer();
+    }
   }
 
   applySettings() {

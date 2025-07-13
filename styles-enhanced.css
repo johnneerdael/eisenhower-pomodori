@@ -330,3 +330,50 @@ input[type="range"].slider:hover::-webkit-slider-thumb { background: var(--accen
   .timer-btn,
   .feedback-message { transition: none !important; animation: none !important; }
 }
+
+/* styles-enhanced.css */
+
+/***** 2. Enhanced Focus Timer Overlay *****/
+/* Container revealed when focus mode is active */
+#focusTimer {
+  position: fixed;
+  inset: 0; /* Modern way to set top, right, bottom, left to 0 */
+  display: none; /* Changed to 'flex' by JavaScript to show */
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65); /* Dark, semi-transparent backdrop */
+  backdrop-filter: blur(6px); /* Glassy effect for modern browsers */
+  z-index: 2100; /* Ensures it's on top of all other content */
+  animation: overlayFadeIn 0.3s ease; /* Subtle fade-in for the backdrop */
+}
+
+/* This class is toggled on the body tag by JS */
+body.focus-mode #focusTimer {
+  display: flex;
+}
+
+/* The main box holding the timer content */
+.focus-timer {
+  background: var(--secondary-bg);
+  padding: var(--spacing-xl);
+  border-radius: 1.5rem; /* Nicely rounded corners */
+  box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+  text-align: center;
+  width: 90%;
+  max-width: 480px; /* Limits width on large screens */
+  border: 1px solid var(--border-color);
+  animation: modalPopIn 0.3s ease-out forwards; /* Fun pop-in animation */
+}
+
+/* Keyframe animations for the entrance */
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalPopIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* (The rest of your .timer-display, .timer-controls, etc. styles will apply inside this box) */
