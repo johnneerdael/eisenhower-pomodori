@@ -9,7 +9,7 @@ RUN npm ci
 # If you lint/test in CI, add RUN npm run test here
 
 COPY . .
-RUN npm install tone && npm run build 
+RUN npm run build 
 
 ######################## 2️⃣  Runtime (static) ###############
 FROM nginx:1.27-alpine
