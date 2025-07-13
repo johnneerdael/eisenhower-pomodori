@@ -120,6 +120,36 @@
       </div>
     </section>
   </main>
+  <div id="authContainer" class="auth-container" style="display: none;">
+    <div class="auth-box">
+      <h2 id="authTitle">Welcome Back</h2>
+      <p id="authSubtitle" class="auth-subtitle">Login to sync your FocusMatrix.</p>
+      
+      <form id="authForm">
+        <div class="form-group">
+          <label for="authEmail">Email</label>
+          <input type="email" id="authEmail" class="setting-control" placeholder="you@example.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="authPassword">Password</label>
+          <input type="password" id="authPassword" class="setting-control" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+
+        <div id="authFeedback" class="auth-feedback" style="display: none;"></div>
+
+        <div class="auth-actions">
+          <button type="submit" id="loginBtn" class="btn btn-primary">Log In</button>
+          <button type="button" id="signupBtn" class="btn btn-secondary">Sign Up</button>
+        </div>
+      </form>
+
+      <div class="auth-helpers">
+        <a href="#" id="resetPasswordLink">Forgot Password?</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="settingsModal" class="settings-modal" role="dialog" ...>
 
   <!-- ─────────────────────── Settings Modal ─────────────────────── -->
   <div id="settingsModal" class="settings-modal" role="dialog" aria-labelledby="settingsTitle" aria-hidden="true">

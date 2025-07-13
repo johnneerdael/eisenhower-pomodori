@@ -26,25 +26,99 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ───────────────────────── Auth helper ─────────────────────── */
-async function ensureAuth() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.user) return session.user;
-  const email = prompt('Enter e‑mail to sync FocusMatrix across devices (magic‑link will be sent):');
-  if (!email) return null;
-  const isNative = window.location.protocol === 'capacitor:' || window.location.protocol === 'app:';
-  const redirectUrl = isNative ? 'focusmatrix://auth-callback'
-                               : 'https://pomodoro.thepi.es';
-  
-  await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: redirectUrl }
-  });
-  if (error) { 
-    alert('Sign‑in failed: ' + error.message); 
-    return null; 
+// app.js
+
+/* ───────────────────────── Auth UI Manager ─────────────────────── */
+class AuthManager {
+  constructor(app) {
+    this.app = app;
+    this.container = document.getElementById('authContainer');
+    this.form = document.getElementById('authForm');
+    this.emailInput = document.getElementById('authEmail');
+    this.passwordInput = document.getElementById('authPassword');
+    this.loginBtn = document.getElementById('loginBtn');
+    this.signupBtn = document.getElementById('signupBtn');
+    this.resetLink = document.getElementById('resetPasswordLink');
+    this.feedback = document.getElementById('authFeedback');
+    
+    // This promise resolves when authentication is successful
+    this.authPromise = new Promise(resolve => {
+      this.resolveAuth = resolve;
+    });
   }
-  alert('Check your inbox, click the link, then reload.');
-  return null;
+
+  show() {
+    this.container.style.display = 'flex';
+  }
+
+  hide() {
+    this.container.style.display = 'none';
+  }
+
+  bindEvents() {
+    this.form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      this.setLoading(true);
+      const email = this.emailInput.value;
+      const password = this.passwordInput.value;
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        this.showFeedback(error.message, 'error');
+      } else if (data.user) {
+        this.showFeedback('Success! Loading your matrix...', 'success');
+        this.app.user = data.user;
+        this.resolveAuth(data.user);
+        setTimeout(() => this.hide(), 1000);
+      }
+      this.setLoading(false);
+    });
+
+    this.signupBtn.addEventListener('click', async () => {
+      this.setLoading(true);
+      const email = this.emailInput.value;
+      const password = this.passwordInput.value;
+      const { data, error } = await supabase.auth.signUp({ email, password });
+
+      if (error) {
+        this.showFeedback(error.message, 'error');
+      } else {
+        this.showFeedback('Success! Check your email for a confirmation link.', 'success');
+      }
+      this.setLoading(false);
+    });
+
+    this.resetLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const email = this.emailInput.value;
+        if (!email) {
+            this.showFeedback('Please enter your email address first.', 'error');
+            return;
+        }
+        this.setLoading(true);
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: 'https://pomodoro.thepi.es',
+        });
+        if (error) {
+            this.showFeedback(error.message, 'error');
+        } else {
+            this.showFeedback('Password reset link sent! Check your email.', 'success');
+        }
+        this.setLoading(false);
+    });
+  }
+
+  showFeedback(message, type = 'info') {
+    this.feedback.textContent = message;
+    this.feedback.className = `auth-feedback ${type}`;
+    this.feedback.style.display = 'block';
+  }
+
+  setLoading(isLoading) {
+    this.loginBtn.disabled = isLoading;
+    this.signupBtn.disabled = isLoading;
+    this.loginBtn.textContent = isLoading ? '...' : 'Log In';
+  }
 }
 
 /* ==================================================================
@@ -87,6 +161,8 @@ export class FocusMatrixCloud {
     this.draggedTask = null;
     this.focusMode = false;
     this.progressMode = false;
+    this.authManager = new AuthManager(this);
+
 
     /* Timer */
     this.timerRunning = false;
@@ -108,13 +184,26 @@ export class FocusMatrixCloud {
 
   /* ─────────────────────────── INIT ────────────────────────── */
   async init() {
-    this.user = await ensureAuth();
+    // This is the new, streamlined initialization flow
+    this.authManager.bindEvents();
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (session?.user) {
+      this.user = session.user;
+    } else {
+      this.authManager.show();
+      // Wait for the user to log in successfully
+      this.user = await this.authManager.authPromise;
+    }
+
+    // Once authenticated, proceed with loading the app
     await this.loadSettings();
     await this.loadStats();
     await this.loadTasks();
 
     this.applySettings();
-    this.bindEvents();
+    this.bindEvents(); // This binds the MAIN app events
     this.renderAllTasks();
     this.updateGoalSelect();
     this.updateDashboard();

@@ -377,3 +377,95 @@ body.focus-mode #focusTimer {
 }
 
 /* (The rest of your .timer-display, .timer-controls, etc. styles will apply inside this box) */
+/* styles-enhanced.css */
+
+/***** 6. Authentication Page Styles *****/
+.auth-container {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-bg); /* Use solid background for auth */
+  z-index: 3000; /* Highest z-index */
+  animation: overlayFadeIn 0.3s ease;
+}
+
+.auth-box {
+  background: var(--secondary-bg);
+  padding: var(--spacing-xl);
+  border-radius: 1.5rem;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.1);
+  width: 90%;
+  max-width: 420px;
+  border: 1px solid var(--border-color);
+}
+
+.auth-box h2 {
+  text-align: center;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  margin-bottom: var(--spacing-xs);
+  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.auth-subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
+#authForm .form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+#authForm label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+}
+
+.auth-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-lg);
+}
+
+.auth-feedback {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.auth-feedback.error {
+  background-color: var(--q1-color);
+  color: #dc2626;
+  border: 1px solid var(--q1-border);
+}
+
+.auth-feedback.success {
+  background-color: var(--q2-color);
+  color: #2563eb;
+  border: 1px solid var(--q2-border);
+}
+
+.auth-helpers {
+  text-align: center;
+  margin-top: var(--spacing-lg);
+}
+
+.auth-helpers a {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+}
+.auth-helpers a:hover {
+  color: var(--accent-start);
+  text-decoration: underline;
+}
