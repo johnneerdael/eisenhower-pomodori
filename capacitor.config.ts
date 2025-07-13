@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.piehouse.focusmatrix',
+  appId: 'com.piehousemv .focusmatrix',
   appName: 'FocusMatrix',
   webDir: 'dist',
 

@@ -1056,4 +1056,24 @@ export class FocusMatrixCloud {
 
 document.addEventListener('DOMContentLoaded', () => {
   window.focusMatrix = new FocusMatrixCloud();
+  const burgerBtn = document.getElementById('burger');
+  const mobileNav = document.getElementById('mobileNav');
+
+  if (burgerBtn && mobileNav) {
+    burgerBtn.addEventListener('click', () => {
+      const isExpanded = burgerBtn.getAttribute('aria-expanded') === 'true';
+      burgerBtn.setAttribute('aria-expanded', String(!isExpanded)); // Toggle aria-expanded
+      mobileNav.classList.toggle('is-open'); // Toggle the class for visibility
+      mobileNav.setAttribute('aria-hidden', String(isExpanded)); // Toggle aria-hidden
+    });
+
+    // Optional: Close menu when a menu item is clicked
+    mobileNav.querySelectorAll('.mobile-item').forEach(item => {
+      item.addEventListener('click', () => {
+        burgerBtn.setAttribute('aria-expanded', 'false');
+        mobileNav.classList.remove('is-open');
+        mobileNav.setAttribute('aria-hidden', 'true');
+      });
+    });
+  }
 });

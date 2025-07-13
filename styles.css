@@ -165,7 +165,7 @@ body {
   z-index: 20;
 }
 
-.mobile-nav.show{
+.mobile-nav.is-open {
   transform: scaleY(1);
   opacity: 1;
   pointer-events: auto;
