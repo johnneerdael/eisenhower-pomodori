@@ -113,7 +113,15 @@ export class FocusMatrixCloud {
   async loadTasks() {
     if (this.isOnline) {
       const { data } = await supabase.from('tasks').select('*').eq('user_id', this.user.id).order('created_at');
-      this.tasks = data || [];
+      // Map database tasks to our local format
+      this.tasks = (data || []).map(dbTask => ({
+        id: `task_${dbTask.id}`, // Keep our local ID format for UI consistency
+        database_id: dbTask.id,   // Store the actual database ID
+        text: dbTask.text,
+        quadrant: dbTask.quadrant,
+        goal: dbTask.goal || null,
+        created_at: dbTask.created_at
+      }));
     } else {
       this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]');
     }
@@ -121,8 +129,60 @@ export class FocusMatrixCloud {
 
   async saveTasks() {
     if (this.isOnline) {
-      const rows = this.tasks.map(t => ({ ...t, user_id: this.user.id }));
-      await supabase.from('tasks').upsert(rows, { onConflict: 'id' });
+      try {
+        // For new tasks (those without database IDs), we need to insert them
+        const newTasks = this.tasks.filter(t => !t.database_id);
+        const existingTasks = this.tasks.filter(t => t.database_id);
+        
+        // Insert new tasks
+        if (newTasks.length > 0) {
+          const { data: insertedTasks, error: insertError } = await supabase
+            .from('tasks')
+            .insert(newTasks.map(t => ({
+              user_id: this.user.id,
+              text: t.text,
+              quadrant: t.quadrant,
+              goal: t.goal,
+              created_at: t.created_at,
+              updated_at: new Date().toISOString()
+            })))
+            .select();
+          
+          if (insertError) {
+            console.error('Error inserting tasks:', insertError);
+          } else if (insertedTasks) {
+            // Update local tasks with database IDs
+            insertedTasks.forEach((dbTask, index) => {
+              const localTask = newTasks[index];
+              if (localTask) {
+                localTask.database_id = dbTask.id;
+              }
+            });
+          }
+        }
+        
+        // Update existing tasks
+        if (existingTasks.length > 0) {
+          const updates = existingTasks.map(t => ({
+            id: t.database_id,
+            user_id: this.user.id,
+            text: t.text,
+            quadrant: t.quadrant,
+            goal: t.goal,
+            updated_at: new Date().toISOString()
+          }));
+          
+          const { error: updateError } = await supabase
+            .from('tasks')
+            .upsert(updates);
+          
+          if (updateError) {
+            console.error('Error updating tasks:', updateError);
+          }
+        }
+      } catch (error) {
+        console.error('Error saving tasks to Supabase:', error);
+      }
     }
     localStorage.setItem('focusmatrix_ultimate_tasks', JSON.stringify(this.tasks));
   }
@@ -131,10 +191,25 @@ export class FocusMatrixCloud {
   async loadSettings() {
     const defaults = this.settings;
     if (this.isOnline) {
-      const { data } = await supabase.from('settings').select('data').eq('user_id', this.user?.id).single();
-      const cloud = data?.data || {};
-      const local = JSON.parse(localStorage.getItem('focusmatrix_ultimate_settings') || '{}');
-      this.settings = { ...defaults, ...cloud, ...local };
+      try {
+        const { data, error } = await supabase
+          .from('settings')
+          .select('data')
+          .eq('user_id', this.user?.id)
+          .single();
+        
+        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+          console.error('Error loading settings:', error);
+        }
+        
+        const cloud = data?.data || {};
+        const local = JSON.parse(localStorage.getItem('focusmatrix_ultimate_settings') || '{}');
+        this.settings = { ...defaults, ...cloud, ...local };
+      } catch (error) {
+        console.error('Error loading settings:', error);
+        // Fall back to local storage
+        this.settings = { ...defaults, ...JSON.parse(localStorage.getItem('focusmatrix_ultimate_settings') || '{}') };
+      }
     } else {
       this.settings = { ...defaults, ...JSON.parse(localStorage.getItem('focusmatrix_ultimate_settings') || '{}') };
     }
@@ -142,10 +217,20 @@ export class FocusMatrixCloud {
 
   async saveSettings() {
     if (this.isOnline) {
-      await supabase.from('settings').upsert({
-        user_id: this.user.id,
-        data: this.settings
-      });
+      try {
+        const { error } = await supabase
+          .from('settings')
+          .upsert({
+            user_id: this.user.id,
+            data: this.settings
+          });
+        
+        if (error) {
+          console.error('Error saving settings:', error);
+        }
+      } catch (error) {
+        console.error('Error saving settings:', error);
+      }
     }
     localStorage.setItem('focusmatrix_ultimate_settings', JSON.stringify(this.settings));
     this.updateGoalSelect();
@@ -153,10 +238,52 @@ export class FocusMatrixCloud {
 
   /* ---------- STATS ---------- */
   async loadStats() {
-    const today = new Date().toDateString();
+    const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD for DATE type
     if (this.isOnline) {
-      const { data } = await supabase.from('daily_stats').select('*').eq('user_id', this.user.id).eq('day', today).single();
-      this.stats = data || { ...this.stats, day: today };
+      try {
+        const { data, error } = await supabase
+          .from('daily_stats')
+          .select('*')
+          .eq('user_id', this.user.id)
+          .eq('day', today)
+          .single();
+        
+        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+          console.error('Error loading stats:', error);
+        }
+        
+        if (data) {
+          // Map database fields to local stats structure
+          this.stats = {
+            tasksAddedToday: data.tasks_added || 0,
+            tasksCompletedToday: data.tasks_completed || 0,
+            tasksEliminatedToday: data.tasks_eliminated || 0,
+            focusSessionsToday: data.focus_sessions || 0,
+            dailyStreak: this.stats.dailyStreak || 0, // Keep existing local values
+            focusStreak: this.stats.focusStreak || 0,
+            totalEliminated: this.stats.totalEliminated || 0,
+            lastUsedDate: today,
+            achievements: this.stats.achievements || {
+              firstStep: false,
+              focusStarter: false,
+              goodJudgment: false
+            },
+            day: today
+          };
+        } else {
+          // No data for today, reset daily counters
+          this.stats.tasksAddedToday = 0;
+          this.stats.tasksCompletedToday = 0;
+          this.stats.tasksEliminatedToday = 0;
+          this.stats.focusSessionsToday = 0;
+          this.stats.lastUsedDate = today;
+          this.stats.day = today;
+        }
+      } catch (error) {
+        console.error('Error loading stats:', error);
+        // Fall back to local storage
+        this.stats = JSON.parse(localStorage.getItem('focusmatrix_ultimate_stats') || '{}') || { ...this.stats };
+      }
     } else {
       this.stats = JSON.parse(localStorage.getItem('focusmatrix_ultimate_stats') || '{}') || { ...this.stats };
       if (this.stats.day !== today) {
@@ -167,10 +294,27 @@ export class FocusMatrixCloud {
 
   async saveStats() {
     if (this.isOnline) {
-      await supabase.from('daily_stats').upsert({
-        ...this.stats,
-        user_id: this.user.id
-      });
+      try {
+        const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
+        const { error } = await supabase
+          .from('daily_stats')
+          .upsert({
+            user_id: this.user.id,
+            day: today,
+            tasks_added: this.stats.tasksAddedToday || 0,
+            tasks_completed: this.stats.tasksCompletedToday || 0,
+            tasks_eliminated: this.stats.tasksEliminatedToday || 0,
+            focus_sessions: this.stats.focusSessionsToday || 0
+          }, {
+            onConflict: 'user_id,day'
+          });
+        
+        if (error) {
+          console.error('Error saving stats:', error);
+        }
+      } catch (error) {
+        console.error('Error saving stats:', error);
+      }
     }
     localStorage.setItem('focusmatrix_ultimate_stats', JSON.stringify(this.stats));
   }
@@ -780,14 +924,35 @@ export class FocusMatrixCloud {
     const el = document.querySelector(`[data-task-id="${id}"]`);
 
     const finish = async () => {
+      // Delete from database if task has a database ID
+      if (this.isOnline && t.database_id) {
+        try {
+          const { error } = await supabase
+            .from('tasks')
+            .delete()
+            .eq('id', t.database_id);
+          
+          if (error) {
+            console.error('Error deleting task from database:', error);
+          }
+        } catch (error) {
+          console.error('Error deleting task:', error);
+        }
+      }
+      
+      // Remove from local array
       this.tasks.splice(idx, 1);
-      await this.saveTasks();
+      
+      // Update stats
       if (t.quadrant === 4) {
         this.stats.tasksEliminatedToday++;
         this.stats.totalEliminated++;
       } else {
         this.stats.tasksCompletedToday++;
       }
+      
+      // Save updated data
+      localStorage.setItem('focusmatrix_ultimate_tasks', JSON.stringify(this.tasks));
       await this.saveStats();
       this.updateDashboard();
       this.checkAchievements();
