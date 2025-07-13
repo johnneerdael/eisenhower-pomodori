@@ -1,0 +1,19 @@
+{
+    "name": "focusmatrix-ultimate-cloud",
+    "version": "2.0.0",
+    "private": true,
+    "description": "ADHD‑friendly Eisenhower Matrix – Supabase cloud build",
+    "scripts": {
+      "dev": "vite",
+      "build": "vite build",
+      "preview": "vite preview",
+      "start": "vite preview --port 5000"
+    },
+    "dependencies": {
+      "@supabase/supabase-js": "^2.43.3"
+    },
+    "devDependencies": {
+      "vite": "^5.2.0"
+    }
+  }
+  

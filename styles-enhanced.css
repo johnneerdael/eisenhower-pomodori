@@ -1,0 +1,332 @@
+/* ------------------------------------------------------------------
+ * FocusMatrix Ultimate – Enhanced UI Styling
+ * Targets: Focus Timer overlay + Settings modal + core button aesthetic
+ * Author: ChatGPT – July 2025
+ * ------------------------------------------------------------------ */
+
+/***** 1. Shared: Modern Button Palette *****/
+:root {
+  /* Accent & gradients */
+  --accent-start: #3b82f6;
+  --accent-end:   #6366f1;
+  --danger-start: #dc2626;
+  --danger-end:   #ef4444;
+}
+
+.btn,
+.timer-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.6rem 1.25rem;
+  border: 0;
+  border-radius: 9999px; /* pill */
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--transition-speed) ease, transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}
+.btn-primary,
+.timer-btn.primary {
+  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+}
+.btn-primary:hover,
+.btn-primary:focus,
+.timer-btn.primary:hover,
+.timer-btn.primary:focus { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(99,102,241,0.45); }
+
+.btn-danger { background: linear-gradient(135deg, var(--danger-start), var(--danger-end)); color:#fff; box-shadow: 0 4px 14px rgba(239,68,68,0.35); }
+.btn-danger:hover,
+.btn-danger:focus { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(239,68,68,0.45); }
+
+.btn-secondary { background: var(--secondary-bg); color: var(--text-primary); border: 2px solid var(--border-color); }
+.btn-secondary:hover,
+.btn-secondary:focus { background: var(--primary-bg); }
+
+
+/***** 2. Enhanced Focus Timer Overlay *****/
+/* Container revealed when focus mode active (toggle via JS) */
+#focusTimer {
+  position: fixed;
+  inset: 0;
+  display: none; /* toggled to flex in JS */
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+  z-index: 2100;
+  animation: overlayFade var(--transition-speed) ease forwards;
+}
+body.focus-mode #focusTimer { display: flex; }
+
+.focus-timer {
+  background: var(--secondary-bg);
+  padding: var(--spacing-xl);
+  border-radius: 1.5rem;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+  text-align: center;
+  width: 90%;
+  max-width: 480px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  animation: modalPopIn 0.3s ease-out forwards;
+}
+
+@keyframes modalPopIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Timer header with session info */
+.timer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.timer-session-info h3 {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+  text-align: left;
+}
+
+.timer-session-count {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-align: left;
+}
+
+/* Enhanced timer display */
+.timer-display {
+  font-size: 5rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: var(--spacing-lg) 0;
+  color: var(--text-primary);
+  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Courier New', monospace;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.timer-display.focus-mode {
+  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.timer-display.break-mode {
+  background: linear-gradient(135deg, #10b981, #059669);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Timer phase indicator */
+.timer-phase-selector {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+  background-color: var(--primary-bg);
+  padding: var(--spacing-xs);
+  border-radius: 9999px;
+}
+
+.phase-btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 9999px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  transition: all var(--transition-speed) ease;
+  border: none;
+  background-color: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.phase-btn:hover,
+.phase-btn.active {
+  opacity: 1;
+}
+
+.phase-btn.active.focus {
+  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+  color: white;
+  box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+}
+
+.phase-btn.active.break {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  box-shadow: 0 4px 14px rgba(16,185,129,0.35);
+}
+
+/* Enhanced timer controls */
+.timer-controls { 
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm); 
+  margin-bottom: var(--spacing-lg);
+}
+
+.timer-btn { 
+  min-width: 110px;
+  min-height: 48px;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+}
+
+.timer-btn.start-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  box-shadow: 0 4px 14px rgba(16,185,129,0.35);
+}
+
+.timer-btn.pause-btn {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  box-shadow: 0 4px 14px rgba(245,158,11,0.35);
+}
+
+.timer-btn.reset-btn {
+  background: var(--secondary-bg);
+  color: var(--text-primary);
+  border: 2px solid var(--border-color);
+}
+.timer-btn.reset-btn:hover {
+  background: var(--primary-bg);
+}
+
+.exit-focus {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-xs);
+}
+.exit-focus:hover {
+  color: var(--text-primary);
+}
+
+@media (max-width: 480px) {
+  .timer-display { font-size: 4rem; }
+  .timer-controls { grid-template-columns: 1fr 1fr; }
+  .timer-btn.reset-btn { grid-column: 1 / -1; }
+}
+
+/***** 3. Settings Modal Polish *****/
+.settings-modal.show .settings-overlay { animation: overlayFade var(--transition-speed) ease forwards; }
+@keyframes overlayFade { from { opacity: 0; } to { opacity: 1; } }
+
+.settings-content {
+  background: var(--secondary-bg);
+  border-radius: 1rem;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 88vh;
+}
+.settings-header {
+  background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
+  color: #fff;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  align-items: center;
+}
+.settings-header h3 { margin: 0; }
+.close-settings {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  transition: transform var(--transition-speed) ease;
+}
+.close-settings:hover { transform: scale(1.2); }
+
+.settings-body {
+  overflow-y: auto;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  display: grid;
+  row-gap: var(--spacing-lg);
+}
+.settings-body section { display: grid; row-gap: var(--spacing-sm); }
+.settings-body label { font-weight: 500; }
+
+/* Range slider facelift */
+input[type="range"].slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border-color);
+  outline: none;
+}
+input[type="range"].slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-start);
+  cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+  transition: background var(--transition-speed) ease;
+}
+input[type="range"].slider:hover::-webkit-slider-thumb { background: var(--accent-end); }
+
+.settings-footer {
+  background: var(--primary-bg);
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+}
+
+/***** 4. Feedback Toast Re‑skin *****/
+.feedback-message {
+  position: fixed;
+  bottom: var(--spacing-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 9999px;
+  font-weight: 600;
+  color: #fff;
+  animation: toastIn 0.3s ease forwards, toastOut 0.3s ease 2.7s forwards;
+  pointer-events: none;
+}
+.feedback-message.success { background: var(--accent-start); }
+.feedback-message.error   { background: var(--danger-start); }
+.feedback-message.info    { background: var(--text-secondary); color:#fff; }
+@keyframes toastIn { from { opacity:0; transform: translate(-50%, 20px);} to { opacity:1; transform: translate(-50%,0);} }
+@keyframes toastOut { to { opacity:0; transform: translate(-50%, 20px);} }
+
+/***** 5. Utility Spaces *****/
+:root {
+  --spacing-2xl: 3rem;
+}
+
+/* Ensure settings modal respects prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .timer-btn,
+  .feedback-message { transition: none !important; animation: none !important; }
+}

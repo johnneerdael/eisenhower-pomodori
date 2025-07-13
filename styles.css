@@ -1,0 +1,430 @@
+/* CSS Custom Properties for ADHD-friendly theming */
+:root {
+  /* Color palette - soft, calming colors */
+  --primary-bg: #f8fafc;
+  --secondary-bg: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
+  
+  /* Quadrant colors - soft but distinct */
+  --q1-color: #fef2f2; /* Soft red */
+  --q1-border: #fca5a5;
+  --q2-color: #eff6ff; /* Soft blue */
+  --q2-border: #93c5fd;
+  --q3-color: #fff7ed; /* Soft orange */
+  --q3-border: #fdba74;
+  --q4-color: #f8fafc; /* Soft gray */
+  --q4-border: #cbd5e1;
+  
+  /* Spacing and sizing */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 3rem;
+  
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  
+  /* Shadows and effects */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --border-radius: 0.5rem;
+  
+  /* Animation speed - respecting reduced motion */
+  --transition-speed: 0.2s;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-speed: 0.01ms;
+  }
+  
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary-bg: #0f172a;
+    --secondary-bg: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --border-color: #334155;
+    
+    --q1-color: #450a0a;
+    --q1-border: #dc2626;
+    --q2-color: #172554;
+    --q2-border: #3b82f6;
+    --q3-color: #431407;
+    --q3-border: #ea580c;
+    --q4-color: #1e293b;
+    --q4-border: #475569;
+  }
+
+  /* Ensure header buttons have correct contrast in dark mode */
+  .header-controls .settings-btn,
+  .header-controls .focus-toggle,
+  .header-controls .progress-toggle,
+  .header-controls .export-btn {
+    color: var(--text-primary); /* Will be light gray */
+  }
+
+  .header-controls .focus-toggle.active,
+  .header-controls .progress-toggle.active {
+    color: #FFFFFF !important; /* Ensure active state is pure white */
+  }
+}
+
+/* Reset and base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  color: var(--text-primary);
+  background-color: var(--primary-bg);
+  min-height: 100vh;
+}
+
+/* Focus styles for accessibility */
+*:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* App container */
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+}
+
+/* Header */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.app-header h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.header-controls {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.settings-btn,
+.focus-toggle,
+.progress-toggle,
+.export-btn {
+  background: var(--secondary-bg);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition: all var(--transition-speed) ease;
+  min-width: 44px;
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.settings-btn:hover,
+.settings-btn:focus,
+.focus-toggle:hover,
+.focus-toggle:focus,
+.progress-toggle:hover,
+.progress-toggle:focus,
+.export-btn:hover,
+.export-btn:focus {
+  background-color: var(--primary-bg);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.focus-toggle.active,
+.progress-toggle.active {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #2563eb;
+}
+
+/* Task input section */
+.task-input-section {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xl);
+  flex-wrap: wrap;
+}
+
+#taskInput {
+  flex: 1;
+  min-width: 250px;
+  padding: var(--spacing-md);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+  background-color: var(--secondary-bg);
+  color: var(--text-primary);
+  transition: border-color var(--transition-speed) ease;
+}
+
+#taskInput:focus {
+  border-color: #3b82f6;
+}
+
+#taskInput::placeholder {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+#addTaskBtn {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-speed) ease;
+  min-width: 120px;
+  min-height: 44px;
+}
+
+#addTaskBtn:hover,
+#addTaskBtn:focus {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Matrix container */
+.matrix-container {
+  width: 100%;
+}
+
+.matrix-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: var(--spacing-md);
+  min-height: 600px;
+}
+
+/* Quadrant styles */
+.quadrant {
+  background-color: var(--secondary-bg);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  transition: all var(--transition-speed) ease;
+  position: relative;
+}
+
+.quadrant h2 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+}
+
+.quadrant p {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-md);
+}
+
+/* Individual quadrant colors */
+.q1 { background-color: var(--q1-color); border-color: var(--q1-border); }
+.q1 h2 { color: #dc2626; }
+.q2 { background-color: var(--q2-color); border-color: var(--q2-border); }
+.q2 h2 { color: #2563eb; }
+.q3 { background-color: var(--q3-color); border-color: var(--q3-border); }
+.q3 h2 { color: #ea580c; }
+.q4 { background-color: var(--q4-color); border-color: var(--q4-border); }
+.q4 h2 { color: #64748b; }
+
+/* Task list */
+.task-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  min-height: 200px;
+  padding: var(--spacing-sm);
+  border: 2px dashed transparent;
+  border-radius: var(--border-radius);
+  transition: all var(--transition-speed) ease;
+}
+
+/* Drag and drop states */
+.task-list.drag-over {
+  border-color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Task item styles */
+.task-item {
+  background-color: var(--secondary-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm);
+  cursor: move;
+  user-select: none;
+  transition: all var(--transition-speed) ease;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.task-item:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.task-item.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg);
+}
+
+.task-item .task-text {
+  flex-grow: 1;
+  font-size: var(--font-size-base);
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.task-item .task-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.task-action-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: calc(var(--border-radius) / 2);
+  padding: calc(var(--spacing-xs) / 2) var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-speed) ease;
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.task-action-btn:hover,
+.task-action-btn:focus {
+  background-color: var(--primary-bg);
+}
+
+.delete-btn { color: #dc2626; }
+.delete-btn:hover, .delete-btn:focus { background-color: #fef2f2; border-color: #fca5a5; }
+
+/* Special Q4 elimination styles */
+.q4 .task-item { border-style: dashed; }
+.q4 .delete-btn { background-color: #10b981; color: white; border-color: #10b981; }
+.q4 .delete-btn:hover, .q4 .delete-btn:focus { background-color: #059669; border-color: #059669; }
+
+/* --- ULTIMATE FEATURE STYLES --- */
+
+/* Task Edit Input Styles */
+.task-edit-input {
+  width: 100% !important;
+  padding: 4px 8px !important;
+  border: 2px solid #3b82f6 !important;
+  border-radius: 4px !important;
+  font-size: inherit !important;
+  font-family: inherit !important;
+  background: var(--secondary-bg) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Task completion animations */
+.task-item.completing {
+  animation: taskComplete 0.5s ease-out forwards;
+}
+
+@keyframes taskComplete {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); background-color: #10b981; color: white; }
+  100% { transform: scale(0.8); opacity: 0; }
+}
+
+/* Enhanced Mobile Touch Support */
+@media (max-width: 768px) {
+  .matrix-grid { grid-template-columns: 1fr; grid-template-rows: repeat(4, 1fr); gap: var(--spacing-sm); }
+  .task-input-section { flex-direction: column; }
+  #taskInput { min-width: 100%; }
+  .app-container { padding: var(--spacing-sm); }
+  .header-controls { flex-wrap: wrap; justify-content: center; gap: var(--spacing-xs); }
+  
+  .task-item { min-height: 60px; padding: var(--spacing-md); touch-action: pan-y; }
+  .task-action-btn { min-width: 48px; min-height: 48px; }
+  .progress-toggle, .focus-toggle, .export-btn, .settings-btn { min-width: 60px; min-height: 48px; }
+}
+
+/* Swipe Gesture Support */
+.task-item.swipe-left { transform: translateX(-100px); opacity: 0.7; }
+.task-item.swipe-right { transform: translateX(100px); opacity: 0.7; }
+
+/* Settings Modal */
+.settings-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; display: none; align-items: center; justify-content: center; }
+.settings-modal.show { display: flex; }
+.settings-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); }
+.settings-content { background: var(--secondary-bg); border: 2px solid var(--border-color); border-radius: var(--border-radius); max-width: 600px; width: 100%; z-index: 1; }
+.settings-header { display: flex; justify-content: space-between; padding: var(--spacing-md); border-bottom: 2px solid var(--border-color); }
+.settings-body { padding: var(--spacing-md); }
+.settings-footer { display: flex; justify-content: space-between; padding: var(--spacing-md); border-top: 2px solid var(--border-color); }
+.btn { padding: var(--spacing-sm) var(--spacing-md); border: 2px solid; border-radius: calc(var(--border-radius) / 2); cursor: pointer; }
+.btn-primary { background-color: #3b82f6; color: white; border-color: #2563eb; }
+
+/* CORRECTED BUTTON STYLES */
+.btn-secondary { background-color: var(--primary-bg); color: var(--text-primary); border-color: var(--border-color); font-weight: 600; }
+.btn-secondary:hover, .btn-secondary:focus { background-color: var(--secondary-bg); border-color: #94a3b8; }
+.btn-danger { background-color: #fef2f2; color: #dc2626; border-color: #fca5a5; font-weight: 600; }
+.btn-danger:hover, .btn-danger:focus { background-color: #dc2626; color: white; }
+
+/* Focus Timer */
+.focus-timer { padding: var(--spacing-md); margin-bottom: var(--spacing-lg); }
+.timer-display { font-size: var(--font-size-2xl); }
+.timer-select { min-height: 36px; }
+
+/* Progress Dashboard */
+.progress-dashboard { display: none; padding: var(--spacing-md); margin-bottom: var(--spacing-lg); }
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--spacing-md); }
+.stats-card, .achievements-card, .streaks-card { background: var(--primary-bg); padding: var(--spacing-md); border-radius: var(--border-radius); }
+.stat-item, .streak-item, .achievement-item { display: flex; justify-content: space-between; padding: var(--spacing-sm) 0; }
+
+/* Achievement Toast */
+.achievement-container { position: fixed; top: var(--spacing-md); right: var(--spacing-md); z-index: 1500; }
+.achievement-toast { background-color: #10b981; color: white; padding: var(--spacing-md); border-radius: var(--border-radius); }
+
+.empty-state { text-align: center; color: var(--text-secondary); padding: var(--spacing-lg); border: 2px dashed var(--border-color); border-radius: var(--border-radius); }
