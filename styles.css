@@ -191,10 +191,60 @@ body {
 }
 
 
+/* styles.css */
+
 /* desktop keeps original layout */
 @media (min-width: 769px) {
-  .burger-btn { display: none; }
-  .mobile-nav { display: flex !important; flex-direction: row; gap: var(--spacing-sm); margin-top: 0; }
+  .burger-btn {
+    display: none;
+  }
+
+  /* Reset mobile nav for desktop view */
+  .mobile-nav {
+    position: static; /* Put back in normal flow */
+    transform: none; /* Reset scaling */
+    opacity: 1; /* Make it visible */
+    pointer-events: auto; /* Make it clickable */
+    width: auto;
+    padding: 0;
+    background: transparent;
+    backdrop-filter: none;
+    border: none;
+    box-shadow: none;
+    
+    /* Re-apply desktop flex layout */
+    display: flex !important; 
+    flex-direction: row; 
+    gap: var(--spacing-sm); 
+    margin-top: 0;
+  }
+
+  /* Style the menu items as buttons on desktop */
+  .mobile-item {
+    background: var(--secondary-bg);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-base);
+    cursor: pointer;
+    transition: all var(--transition-speed) ease;
+    min-width: 44px;
+    min-height: 44px;
+    white-space: nowrap;
+  }
+
+  .mobile-item:hover,
+  .mobile-item:focus {
+    background-color: var(--primary-bg);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .mobile-item.active {
+    background-color: #3b82f6;
+    color: white;
+    border-color: #2563eb;
+  }
 }
 
 /* Focus styles for accessibility */
