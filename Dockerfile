@@ -9,6 +9,7 @@ RUN npm ci
 # If you lint/test in CI, add RUN npm run test here
 
 COPY . .
+COPY .env ./
 RUN npm run build 
 
 ######################## 2️⃣  Runtime (static) ###############
