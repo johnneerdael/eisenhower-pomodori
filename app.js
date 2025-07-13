@@ -25,6 +25,94 @@ const SUPABASE_URL = "https://mzxeyosjcunoucmjgvln.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16eGV5b3NqY3Vub3VjbWpndmxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzOTgyODIsImV4cCI6MjA2Nzk3NDI4Mn0.kXdS6Pvxt6Q62G5IOo_NZhc2jinTM7swfc7MfBxsJvE";
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+/* ───────────────────────── Audio Manager (NEW) ─────────────────────── */
+class AudioManager {
+  constructor(app) {
+      this.app = app;
+      this.isInitialized = false;
+      this.sounds = {};
+      this.activeSoundscape = null;
+      this.tickingLoop = null;
+  }
+
+  async init() {
+      if (this.isInitialized || typeof Tone === 'undefined') return;
+      await Tone.start();
+      console.log('🔊 Audio context started.');
+
+      // Synthesizer for the 'complete' sound
+      this.sounds.complete = new Tone.Synth({
+          oscillator: { type: 'sine' },
+          envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 },
+      }).toDestination();
+
+      // Noise generators for soundscapes
+      this.sounds.rain = new Tone.Noise('pink').toDestination();
+      this.sounds.rain.volume.value = -20;
+      
+      this.sounds.whiteNoise = new Tone.Noise('white').toDestination();
+      this.sounds.whiteNoise.volume.value = -20;
+
+      this.sounds.brownNoise = new Tone.Noise('brown').toDestination();
+      this.sounds.brownNoise.volume.value = -16;
+
+      // Synthesizer for the ticking clock
+      this.sounds.tick = new Tone.MembraneSynth({
+          pitchDecay: 0.008,
+          octaves: 2,
+          envelope: { attack: 0.001, decay: 0.2, sustain: 0 },
+      }).toDestination();
+      this.sounds.tick.volume.value = -18;
+
+      this.isInitialized = true;
+  }
+
+  playSound(soundName) {
+      if (!this.app.settings.soundEnabled || !this.sounds[soundName]) return;
+      if (soundName === 'complete') {
+          this.sounds.complete.triggerAttackRelease('C5', '8n');
+      }
+  }
+
+  startTicking() {
+      if (!this.app.settings.soundEnabled || !this.app.settings.tickingEnabled || this.tickingLoop) return;
+      this.tickingLoop = new Tone.Loop(time => {
+          this.sounds.tick.triggerAttackRelease('C4', '32n', time);
+      }, '1s').start(0);
+      Tone.Transport.start();
+  }
+
+  stopTicking() {
+      if (this.tickingLoop) {
+          this.tickingLoop.stop(0).dispose();
+          this.tickingLoop = null;
+          if (!this.activeSoundscape) {
+              Tone.Transport.stop();
+          }
+      }
+  }
+
+  startSoundscape() {
+      this.stopSoundscape(); // Stop any current soundscape first
+      const type = this.app.settings.soundscape;
+      if (!this.app.settings.soundEnabled || type === 'none' || !this.sounds[type]) return;
+
+      this.activeSoundscape = this.sounds[type];
+      this.activeSoundscape.start();
+      Tone.Transport.start();
+  }
+
+  stopSoundscape() {
+      if (this.activeSoundscape) {
+          this.activeSoundscape.stop();
+          this.activeSoundscape = null;
+          if (!this.tickingLoop) {
+              Tone.Transport.stop();
+          }
+      }
+  }
+}
+
 /* ───────────────────────── Auth UI Manager ─────────────────────── */
 class AuthManager {
   constructor(app) {
@@ -37,85 +125,38 @@ class AuthManager {
     this.signupBtn = document.getElementById('signupBtn');
     this.resetLink = document.getElementById('resetPasswordLink');
     this.feedback = document.getElementById('authFeedback');
-    
-    // This promise resolves when authentication is successful
-    this.authPromise = new Promise(resolve => {
-      this.resolveAuth = resolve;
-    });
+    this.authPromise = new Promise(resolve => { this.resolveAuth = resolve; });
   }
-
-  show() {
-    this.container.style.display = 'flex';
-  }
-
-  hide() {
-    this.container.style.display = 'none';
-  }
-
+  show() { this.container.style.display = 'flex'; }
+  hide() { this.container.style.display = 'none'; }
   bindEvents() {
     this.form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      this.setLoading(true);
-      const email = this.emailInput.value;
-      const password = this.passwordInput.value;
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      
-      if (error) {
-        this.showFeedback(error.message, 'error');
-      } else if (data.user) {
-        this.showFeedback('Success! Loading your matrix...', 'success');
-        this.app.user = data.user;
-        this.resolveAuth(data.user);
-        setTimeout(() => this.hide(), 1000);
-      }
+      e.preventDefault(); this.setLoading(true);
+      const { data, error } = await supabase.auth.signInWithPassword({ email: this.emailInput.value, password: this.passwordInput.value });
+      if (error) { this.showFeedback(error.message, 'error'); } 
+      else if (data.user) { this.showFeedback('Success! Loading your matrix...', 'success'); this.app.user = data.user; this.resolveAuth(data.user); setTimeout(() => this.hide(), 1000); }
       this.setLoading(false);
     });
-
     this.signupBtn.addEventListener('click', async () => {
       this.setLoading(true);
-      const email = this.emailInput.value;
-      const password = this.passwordInput.value;
-      const { data, error } = await supabase.auth.signUp({ email, password });
-
-      if (error) {
-        this.showFeedback(error.message, 'error');
-      } else {
-        this.showFeedback('Success! Check your email for a confirmation link.', 'success');
-      }
+      const { data, error } = await supabase.auth.signUp({ email: this.emailInput.value, password: this.passwordInput.value });
+      if (error) { this.showFeedback(error.message, 'error'); } 
+      else { this.showFeedback('Success! Check your email for a confirmation link.', 'success'); }
       this.setLoading(false);
     });
-
     this.resetLink.addEventListener('click', async (e) => {
         e.preventDefault();
         const email = this.emailInput.value;
-        if (!email) {
-            this.showFeedback('Please enter your email address first.', 'error');
-            return;
-        }
+        if (!email) { this.showFeedback('Please enter your email address first.', 'error'); return; }
         this.setLoading(true);
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: 'https://pomodoro.thepi.es',
-        });
-        if (error) {
-            this.showFeedback(error.message, 'error');
-        } else {
-            this.showFeedback('Password reset link sent! Check your email.', 'success');
-        }
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://pomodoro.thepi.es' });
+        if (error) { this.showFeedback(error.message, 'error'); } 
+        else { this.showFeedback('Password reset link sent! Check your email.', 'success'); }
         this.setLoading(false);
     });
   }
-
-  showFeedback(message, type = 'info') {
-    this.feedback.textContent = message;
-    this.feedback.className = `auth-feedback ${type}`;
-    this.feedback.style.display = 'block';
-  }
-
-  setLoading(isLoading) {
-    this.loginBtn.disabled = isLoading;
-    this.signupBtn.disabled = isLoading;
-    this.loginBtn.textContent = isLoading ? '...' : 'Log In';
-  }
+  showFeedback(message, type = 'info') { this.feedback.textContent = message; this.feedback.className = `auth-feedback ${type}`; this.feedback.style.display = 'block'; }
+  setLoading(isLoading) { this.loginBtn.disabled = isLoading; this.signupBtn.disabled = isLoading; this.loginBtn.textContent = isLoading ? '...' : 'Log In'; }
 }
 
 /* ==================================================================
@@ -135,23 +176,11 @@ export class FocusMatrixCloud {
       shortBreakDuration: 5,
       longBreakDuration: 30,
       sessionsPerCycle: 4,
-      goals: []
+      goals: [],
+      soundscape: 'none', // NEW
+      tickingEnabled: false, // NEW
     };
-    this.stats = {
-      tasksAddedToday: 0,
-      tasksCompletedToday: 0,
-      tasksEliminatedToday: 0,
-      focusSessionsToday: 0,
-      dailyStreak: 0,
-      focusStreak: 0,
-      totalEliminated: 0,
-      lastUsedDate: null,
-      achievements: {
-        firstStep: false,
-        focusStarter: false,
-        goodJudgment: false
-      }
-    };
+    this.stats = { tasksAddedToday: 0, tasksCompletedToday: 0, tasksEliminatedToday: 0, focusSessionsToday: 0, dailyStreak: 0, focusStreak: 0, totalEliminated: 0, lastUsedDate: null, achievements: { firstStep: false, focusStarter: false, goodJudgment: false } };
     this.user = null;
 
     /* ---------- UI state ---------- */
@@ -159,31 +188,24 @@ export class FocusMatrixCloud {
     this.focusMode = false;
     this.progressMode = false;
     this.authManager = new AuthManager(this);
-    this.focusedTask = null; // NEW: The task currently in a focus session
+    this.audioManager = new AudioManager(this); // NEW
+    this.focusedTask = null;
 
     this.handleLogout = async () => {
       const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Error logging out:', error);
-        this.showFeedback('Error logging out. Please try again.', 'error');
-      } else {
-        window.location.reload();
-      }
+      if (error) { console.error('Error logging out:', error); this.showFeedback('Error logging out. Please try again.', 'error'); } 
+      else { window.location.reload(); }
     };
 
     /* Timer */
     this.timerRunning = false;
     this.focusTimer = null;
     this.timeRemaining = this.settings.focusDuration * 60;
-    this.timerMode = 'focus'; // 'focus', 'shortBreak', 'longBreak'
+    this.timerMode = 'focus';
     this.currentCycle = 1;
 
     /* Touch */
-    this.touchStartX = 0;
-    this.touchStartY = 0;
-    this.touchStartTime = 0;
-    this.swipeThreshold = 60;
-    this.tapThreshold = 250;
+    this.touchStartX = 0; this.touchStartY = 0; this.touchStartTime = 0; this.swipeThreshold = 60; this.tapThreshold = 250;
 
     /* Bootstrap */
     this.init();
@@ -192,22 +214,13 @@ export class FocusMatrixCloud {
   /* ─────────────────────────── INIT ────────────────────────── */
   async init() {
     this.authManager.bindEvents();
-    
     const { data: { session } } = await supabase.auth.getSession();
-    
-    if (session?.user) {
-      this.user = session.user;
-    } else {
-      this.authManager.show();
-      this.user = await this.authManager.authPromise;
-    }
-
+    if (session?.user) { this.user = session.user; } 
+    else { this.authManager.show(); this.user = await this.authManager.authPromise; }
     document.getElementById('logoutBtn').style.display = 'inline-flex';
-
     await this.loadSettings();
     await this.loadStats();
     await this.loadTasks();
-
     this.applySettings();
     this.bindEvents();
     this.renderAllTasks();
@@ -219,40 +232,18 @@ export class FocusMatrixCloud {
 
   /* ====================== EVENT BINDINGS ====================== */
   bindEvents() {
-    /* Task input */
     document.getElementById('addTaskBtn').addEventListener('click', () => this.handleAddTask());
-    document.getElementById('taskInput').addEventListener('keypress', e => {
-      if (e.key === 'Enter') this.handleAddTask();
-    });
-
-    /* Header & Logout */
+    document.getElementById('taskInput').addEventListener('keypress', e => { if (e.key === 'Enter') this.handleAddTask(); });
     document.getElementById('progressToggle').addEventListener('click', () => this.toggleProgressDashboard());
     document.getElementById('focusToggle').addEventListener('click', () => this.toggleFocusMode());
     document.getElementById('exportBtn').addEventListener('click', () => this.quickExport());
     document.getElementById('settingsBtn').addEventListener('click', () => this.openSettings());
     document.getElementById('logoutBtn').addEventListener('click', () => this.handleLogout());
-
-    /* NEW: Quadrant Focus Buttons */
-    document.querySelectorAll('.focus-quadrant-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const quadrant = parseInt(btn.dataset.quadrant, 10);
-        this.startFocusOnQuadrant(quadrant);
-      });
-    });
-
-    /* Timer & settings */
+    document.querySelectorAll('.focus-quadrant-btn').forEach(btn => { btn.addEventListener('click', () => { this.startFocusOnQuadrant(parseInt(btn.dataset.quadrant, 10)); }); });
     this.bindTimerEvents();
     this.bindSettingsEvents();
     this.bindDataManagementEvents();
-
-    /* Drag lists */
-    document.querySelectorAll('.task-list').forEach(l => {
-      l.addEventListener('dragover', e => this.handleDragOver(e));
-      l.addEventListener('drop', e => this.handleDrop(e));
-      l.addEventListener('dragenter', e => this.handleDragEnter(e));
-      l.addEventListener('dragleave', e => this.handleDragLeave(e));
-    });
-
+    document.querySelectorAll('.task-list').forEach(l => { l.addEventListener('dragover', e => this.handleDragOver(e)); l.addEventListener('drop', e => this.handleDrop(e)); l.addEventListener('dragenter', e => this.handleDragEnter(e)); l.addEventListener('dragleave', e => this.handleDragLeave(e)); });
     document.addEventListener('keydown', e => this.handleKeyboard(e));
   }
 
@@ -262,38 +253,16 @@ export class FocusMatrixCloud {
     el.className = 'task-item';
     el.draggable = true;
     el.dataset.taskId = task.id;
-    const badge = task.goal ?
-      `<span class="goal-badge" title="${this.escapeHtml(task.goal)}">🎯 ${this.escapeHtml(task.goal)}</span>` : '';
-    el.innerHTML = `
-      <div class="task-text">${this.escapeHtml(task.text)} ${badge}</div>
-      <div class="task-actions">
-        <button class="task-action-btn focus-task-btn" aria-label="Focus on this task">🎯</button>
-        <button class="task-action-btn delete-btn" aria-label="Delete">🗑️</button>
-      </div>
-    `;
-
-    el.addEventListener('dragstart', e => {
-      this.draggedTask = task;
-      e.currentTarget.classList.add('dragging');
-    });
+    const badge = task.goal ? `<span class="goal-badge" title="${this.escapeHtml(task.goal)}">🎯 ${this.escapeHtml(task.goal)}</span>` : '';
+    el.innerHTML = `<div class="task-text">${this.escapeHtml(task.text)} ${badge}</div><div class="task-actions"><button class="task-action-btn focus-task-btn" aria-label="Focus on this task">🎯</button><button class="task-action-btn delete-btn" aria-label="Delete">🗑️</button></div>`;
+    el.addEventListener('dragstart', e => { this.draggedTask = task; e.currentTarget.classList.add('dragging'); });
     el.addEventListener('dragend', e => e.currentTarget.classList.remove('dragging'));
     el.addEventListener('dblclick', () => this.editTask(task));
-    
-    // Wire up new focus button on the task itself
-    el.querySelector('.focus-task-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.startFocusOnTask(task);
-    });
-
-    el.querySelector('.delete-btn').addEventListener('click', e => {
-      e.stopPropagation();
-      this.deleteTask(task.id);
-    });
-
+    el.querySelector('.focus-task-btn').addEventListener('click', (e) => { e.stopPropagation(); this.startFocusOnTask(task); });
+    el.querySelector('.delete-btn').addEventListener('click', e => { e.stopPropagation(); this.deleteTask(task.id); });
     el.addEventListener('touchstart', e => this.handleTouchStart(e));
     el.addEventListener('touchmove', e => this.handleTouchMove(e, el));
     el.addEventListener('touchend', e => this.handleTouchEnd(e, task, el));
-
     document.getElementById(`q${task.quadrant}-tasks`).appendChild(el);
     this.updateEmptyStates();
   }
@@ -335,15 +304,32 @@ export class FocusMatrixCloud {
     this.startTimer();
   }
 
-  /**
-   * Cleans up after a focus session ends (or is exited).
-   */
+  /* ====================== FOCUS LOOP FEATURES ====================== */
+  startFocusOnQuadrant(quadrantNumber) {
+    const taskToFocus = this.tasks.find(t => t.quadrant === quadrantNumber);
+    if (taskToFocus) { this.startFocusOnTask(taskToFocus); } 
+    else { this.showFeedback(`Quadrant ${quadrantNumber} has no tasks to focus on.`, 'info'); }
+  }
+
+  startFocusOnTask(task) {
+    this.focusedTask = task;
+    document.getElementById('timerTaskText').textContent = task.text;
+    const matrixContainer = document.getElementById('matrixContainer');
+    matrixContainer.classList.add('focus-active');
+    document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('is-focus-target'));
+    document.querySelector(`.quadrant[data-quadrant="${task.quadrant}"]`).classList.add('is-focus-target');
+    this.setTimerMode('focus', true);
+    this.toggleFocusMode();
+    this.startTimer();
+  }
+
   endFocusSession() {
     this.focusedTask = null;
     document.getElementById('timerTaskText').textContent = 'Ready for the next challenge!';
-    const matrixContainer = document.getElementById('matrixContainer');
-    matrixContainer.classList.remove('focus-active');
+    document.getElementById('matrixContainer').classList.remove('focus-active');
     document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('is-focus-target'));
+    this.audioManager.stopSoundscape();
+    this.audioManager.stopTicking();
   }
 
   /**
@@ -351,50 +337,28 @@ export class FocusMatrixCloud {
    */
   showTriageModal() {
     const modal = document.getElementById('triageModal');
-    const taskTextEl = document.getElementById('triageTaskText');
+    if (!this.focusedTask) return;
+    document.getElementById('triageTaskText').textContent = this.focusedTask.text;
+    modal.style.display = 'flex';
     const completeBtn = document.getElementById('triageCompleteBtn');
     const incompleteBtn = document.getElementById('triageIncompleteBtn');
-
-    if (!this.focusedTask) return; // Safety check
-
-    taskTextEl.textContent = this.focusedTask.text;
-    modal.style.display = 'flex';
-
-    const handleComplete = async () => {
-      if (this.focusedTask) {
-        await this.deleteTask(this.focusedTask.id);
-      }
-      cleanupAndProceed();
-    };
-
-    const handleIncomplete = () => {
-      cleanupAndProceed();
-    };
-    
+    const handleComplete = async () => { if (this.focusedTask) { await this.deleteTask(this.focusedTask.id); } cleanupAndProceed(); };
+    const handleIncomplete = () => { cleanupAndProceed(); };
     const cleanupAndProceed = () => {
-        // Remove listeners to prevent memory leaks
         completeBtn.removeEventListener('click', handleComplete);
         incompleteBtn.removeEventListener('click', handleIncomplete);
-        
         modal.style.display = 'none';
         this.endFocusSession();
-
-        // Now, proceed to the break
         this.stats.focusSessionsToday++;
         this.saveStats();
         this.updateDashboard();
         this.checkAchievements();
         this.showFeedback('Focus session complete!', 'success');
-
-        if (this.currentCycle % this.settings.sessionsPerCycle === 0) {
-            this.setTimerMode('longBreak');
-        } else {
-            this.setTimerMode('shortBreak');
-        }
+        if (this.currentCycle % this.settings.sessionsPerCycle === 0) { this.setTimerMode('longBreak'); } 
+        else { this.setTimerMode('shortBreak'); }
         this.currentCycle++;
-        this.startTimer(); // Automatically start the break timer
+        this.startTimer();
     };
-
     completeBtn.addEventListener('click', handleComplete, { once: true });
     incompleteBtn.addEventListener('click', handleIncomplete, { once: true });
   }
@@ -404,39 +368,19 @@ export class FocusMatrixCloud {
   timerComplete() {
     this.pauseTimer();
     this.playSound('complete');
-
-    // If this was a focused session on a specific task, show the triage modal.
-    if (this.timerMode === 'focus' && this.focusedTask) {
-      this.showTriageModal();
-    } else { 
-      // Otherwise (for breaks or generic focus), proceed as normal.
+    if (this.timerMode === 'focus' && this.focusedTask) { this.showTriageModal(); } 
+    else { 
       if (this.timerMode === 'focus') {
-          this.stats.focusSessionsToday++;
-          this.saveStats();
-          this.updateDashboard();
-          this.checkAchievements();
+          this.stats.focusSessionsToday++; this.saveStats(); this.updateDashboard(); this.checkAchievements();
           this.showFeedback('Focus session complete!', 'success');
-      } else {
-          this.showFeedback('Break finished. Time to focus!', 'info');
-      }
-
-      if (this.currentCycle % this.settings.sessionsPerCycle === 0 && this.timerMode === 'focus') {
-        this.setTimerMode('longBreak');
-      } else if (this.timerMode === 'focus') {
-        this.setTimerMode('shortBreak');
-      } else {
-        this.setTimerMode('focus');
-      }
+      } else { this.showFeedback('Break finished. Time to focus!', 'info'); }
+      if (this.currentCycle % this.settings.sessionsPerCycle === 0 && this.timerMode === 'focus') { this.setTimerMode('longBreak'); } 
+      else if (this.timerMode === 'focus') { this.setTimerMode('shortBreak'); } 
+      else { this.setTimerMode('focus'); }
       this.currentCycle = (this.timerMode === 'focus') ? this.currentCycle : this.currentCycle + 1;
-      this.startTimer(); // Auto-start next phase
+      this.startTimer();
     }
-
-    if (Notification.permission === 'granted') {
-      new Notification('FocusMatrix Timer', {
-        body: this.timerMode === 'focus' ? 'Time for a break!' : 'Break is over. Time to get back to focus!',
-        icon: 'icons/icon-192x192.png'
-      });
-    }
+    if (Notification.permission === 'granted') { new Notification('FocusMatrix Timer', { body: this.timerMode === 'focus' ? 'Time for a break!' : 'Break is over!', icon: 'icons/icon-192x192.png' }); }
   }
 
   /* ====================== MODES & DASHBOARD (MODIFIED) ====================== */
@@ -444,12 +388,10 @@ export class FocusMatrixCloud {
   toggleFocusMode() {
     this.focusMode = !this.focusMode;
     document.body.classList.toggle('focus-mode', this.focusMode);
-
-    if (!this.focusMode) { // Exiting focus mode
-      if (this.timerRunning) {
-        this.pauseTimer();
-      }
-      this.endFocusSession(); // Clean up highlighting and focused task state
+    if (this.focusMode) { this.audioManager.startSoundscape(); } 
+    else {
+      if (this.timerRunning) { this.pauseTimer(); }
+      this.endFocusSession();
     }
   }
   
@@ -613,11 +555,12 @@ export class FocusMatrixCloud {
     document.getElementById('shortBreakDuration').value = this.settings.shortBreakDuration;
     document.getElementById('longBreakDuration').value = this.settings.longBreakDuration;
     document.getElementById('sessionsPerCycle').value = this.settings.sessionsPerCycle;
-    document.getElementById('soundEnabled').checked = this.settings.soundEnabled;
     document.getElementById('achievementsEnabled').checked = this.settings.achievementsEnabled;
-    ['goal1', 'goal2', 'goal3'].forEach((id, i) => {
-      document.getElementById(id).value = this.settings.goals[i] || '';
-    });
+    // NEW Audio settings
+    document.getElementById('soundEnabled').checked = this.settings.soundEnabled;
+    document.getElementById('soundscapeSelect').value = this.settings.soundscape;
+    document.getElementById('tickingClockEnabled').checked = this.settings.tickingEnabled;
+    ['goal1', 'goal2', 'goal3'].forEach((id, i) => { document.getElementById(id).value = this.settings.goals[i] || ''; });
   }
 
   async saveSettingsFromModal() {
@@ -628,15 +571,21 @@ export class FocusMatrixCloud {
     this.settings.shortBreakDuration = parseInt(document.getElementById('shortBreakDuration').value, 10);
     this.settings.longBreakDuration = parseInt(document.getElementById('longBreakDuration').value, 10);
     this.settings.sessionsPerCycle = parseInt(document.getElementById('sessionsPerCycle').value, 10);
-    this.settings.soundEnabled = document.getElementById('soundEnabled').checked;
     this.settings.achievementsEnabled = document.getElementById('achievementsEnabled').checked;
-    this.settings.goals = [...new Set(['goal1', 'goal2', 'goal3']
-      .map(id => document.getElementById(id).value.trim())
-      .filter(Boolean))].slice(0, 3);
+    // NEW Audio settings
+    this.settings.soundEnabled = document.getElementById('soundEnabled').checked;
+    this.settings.soundscape = document.getElementById('soundscapeSelect').value;
+    this.settings.tickingEnabled = document.getElementById('tickingClockEnabled').checked;
+    this.settings.goals = [...new Set(['goal1', 'goal2', 'goal3'].map(id => document.getElementById(id).value.trim()).filter(Boolean))].slice(0, 3);
     await this.saveSettings();
     this.applySettings();
     this.closeSettings();
     this.showFeedback('Settings saved!', 'success');
+  }
+
+  /* ====================== UTILITY (MODIFIED) ====================== */
+  playSound(soundName) {
+      this.audioManager.playSound(soundName);
   }
 
   handleDragOver(e) { e.preventDefault(); }
@@ -663,13 +612,41 @@ export class FocusMatrixCloud {
   renderAllTasks() { document.querySelectorAll('.task-list').forEach(l => l.innerHTML = ''); this.tasks.forEach(t => this.renderTask(t)); this.updateEmptyStates(); }
 
   bindTimerEvents() { document.getElementById('startTimer').addEventListener('click', () => this.startTimer()); document.getElementById('pauseTimer').addEventListener('click', () => this.pauseTimer()); document.getElementById('resetTimer').addEventListener('click', () => this.resetTimer()); document.getElementById('exitFocus').addEventListener('click', () => this.toggleFocusMode()); document.getElementById('phaseFocus').addEventListener('click', () => this.setTimerMode('focus')); document.getElementById('phaseShortBreak').addEventListener('click', () => this.setTimerMode('shortBreak')); document.getElementById('phaseLongBreak').addEventListener('click', () => this.setTimerMode('longBreak')); }
-  startTimer() { if (this.timerRunning) return; this.timerRunning = true; document.getElementById('startTimer').style.display = 'none'; document.getElementById('pauseTimer').style.display = 'inline-block'; this.focusTimer = setInterval(() => { if (!this.timerRunning) return; this.timeRemaining = Math.max(0, this.timeRemaining - 1); this.updateTimerDisplay(); if (this.timeRemaining === 0) this.timerComplete(); }, 1000); }
-  pauseTimer() { if (!this.timerRunning) return; clearInterval(this.focusTimer); this.timerRunning = false; document.getElementById('startTimer').style.display = 'inline-block'; document.getElementById('pauseTimer').style.display = 'none'; }
+  async startTimer() {
+    if (this.timerRunning) return;
+    await this.audioManager.init(); // Ensure audio is ready
+    this.timerRunning = true;
+    document.getElementById('startTimer').style.display = 'none';
+    document.getElementById('pauseTimer').style.display = 'inline-block';
+    if (this.timerMode === 'focus') {
+        this.audioManager.startTicking();
+    }
+    this.focusTimer = setInterval(() => {
+      if (!this.timerRunning) return;
+      this.timeRemaining = Math.max(0, this.timeRemaining - 1);
+      this.updateTimerDisplay();
+      if (this.timeRemaining === 0) this.timerComplete();
+    }, 1000);
+  }  pauseTimer() {
+    if (!this.timerRunning) return;
+    clearInterval(this.focusTimer);
+    this.timerRunning = false;
+    document.getElementById('startTimer').style.display = 'inline-block';
+    document.getElementById('pauseTimer').style.display = 'none';
+    this.audioManager.stopTicking();
+  }
   resetTimer() { this.pauseTimer(); this.currentCycle = 1; this.setTimerMode('focus', true); }
   updateTimerDisplay() { const m = String(Math.floor(this.timeRemaining / 60)).padStart(2, '0'); const s = String(this.timeRemaining % 60).padStart(2, '0'); document.getElementById('timerDisplay').textContent = `${m}:${s}`; }
   setTimerMode(mode, forceReset = false) { if (!forceReset && this.timerRunning) { if (!confirm('A timer is running. Are you sure you want to switch?')) return; } this.pauseTimer(); this.timerMode = mode; const timerDisplay = document.getElementById('timerDisplay'); const timerSessionTitle = document.getElementById('timerSessionTitle'); const timerSessionCount = document.getElementById('timerSessionCount'); document.querySelectorAll('.phase-btn').forEach(btn => btn.classList.remove('active')); switch (mode) { case 'focus': this.timeRemaining = this.settings.focusDuration * 60; timerDisplay.classList.remove('break-mode'); timerDisplay.classList.add('focus-mode'); document.getElementById('phaseFocus').classList.add('active'); timerSessionTitle.textContent = 'Time to Focus!'; timerSessionCount.textContent = `Session ${this.currentCycle} of ${this.settings.sessionsPerCycle}`; break; case 'shortBreak': this.timeRemaining = this.settings.shortBreakDuration * 60; timerDisplay.classList.remove('focus-mode'); timerDisplay.classList.add('break-mode'); document.getElementById('phaseShortBreak').classList.add('active'); timerSessionTitle.textContent = 'Short Break'; timerSessionCount.textContent = 'Relax and recharge'; break; case 'longBreak': this.timeRemaining = this.settings.longBreakDuration * 60; timerDisplay.classList.remove('focus-mode'); timerDisplay.classList.add('break-mode'); document.getElementById('phaseLongBreak').classList.add('active'); timerSessionTitle.textContent = 'Long Break'; timerSessionCount.textContent = 'Take a well-deserved rest'; break; } this.updateTimerDisplay(); }
   toggleProgressDashboard() { this.progressMode = !this.progressMode; document.getElementById('progressDashboard').style.display = this.progressMode ? 'block' : 'none'; document.getElementById('progressToggle').classList.toggle('active', this.progressMode); if (this.progressMode) this.updateDashboard(); }
-  applySettings() { document.documentElement.style.setProperty('--font-size-base', this.settings.fontSize + 'px'); const s = { none: '0s', slow: '0.5s', normal: '0.2s', fast: '0.1s' }; document.documentElement.style.setProperty('--transition-speed', s[this.settings.animationSpeed] || '0.2s'); this.setTimerMode(this.timerMode, true); }
+  applySettings() {
+    document.documentElement.style.setProperty('--font-size-base', this.settings.fontSize + 'px');
+    const s = { none: '0s', slow: '0.5s', normal: '0.2s', fast: '0.1s' };
+    document.documentElement.style.setProperty('--transition-speed', s[this.settings.animationSpeed] || '0.2s');
+    this.setTimerMode(this.timerMode, true);
+    if (this.focusMode) { this.audioManager.startSoundscape(); }
+    else { this.audioManager.stopSoundscape(); }
+  }
   openSettings() { this.populateSettingsModal(); document.getElementById('settingsModal').classList.add('show'); }
   closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
   resetSettings() { if (!confirm('Reset settings to defaults?')) return; localStorage.removeItem('focusmatrix_ultimate_settings'); window.location.reload(); }

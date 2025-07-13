@@ -443,14 +443,12 @@ input[type="range"].slider:hover::-webkit-slider-thumb { background: var(--accen
   }
 }
 
-/***** 8. NEW: Focus Integration Styles *****/
-
+/***** 8. Focus Integration Styles *****/
 /* Quadrant Header Layout */
 .quadrant-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  /* The h2/p margin is now on the header */
   margin-bottom: var(--spacing-md);
 }
 .quadrant h2, .quadrant p {
@@ -551,4 +549,11 @@ input[type="range"].slider:hover::-webkit-slider-thumb { background: var(--accen
   gap: var(--spacing-sm);
   justify-content: center;
   margin-top: var(--spacing-lg);
+}
+
+/***** 9. NEW: Audio Settings Section *****/
+.settings-section h3 {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
 }
