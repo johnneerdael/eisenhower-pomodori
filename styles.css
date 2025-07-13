@@ -643,85 +643,226 @@ body.focus-mode #focusTimer { display: flex; }
 
 
 /* ==================================================================
-   SETTINGS MODAL
+   /* ==================================================================
+   SETTINGS MODAL (FIXED & ENHANCED)
    ================================================================== */
-/* Note: Assuming a wrapper like .settings-modal.show .settings-overlay exists in HTML */
-.settings-modal.show .settings-overlay { animation: overlayFadeIn 0.3s ease forwards; }
 
-.settings-content {
-  background: var(--secondary-bg);
-  border-radius: 1rem;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  max-height: 88vh;
-}
-.settings-header {
-  display: flex; /* Added for alignment */
-  justify-content: space-between; /* Added for alignment */
-  align-items: center; /* Added for alignment */
-  padding: var(--spacing-md) var(--spacing-lg); /* Added for padding */
-  background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
-  color: #fff;
-  font-size: var(--font-size-xl);
-  font-weight: 600;
-}
-.settings-header h3 { margin: 0; }
-.close-settings {
-  background: transparent;
-  border: 0;
-  color: inherit;
-  font-size: 1.25rem;
-  cursor: pointer;
-  padding: var(--spacing-sm);
-  transition: transform var(--transition-speed) ease;
-}
-.close-settings:hover { transform: scale(1.2); }
-
-.settings-body {
-  overflow-y: auto;
-  padding: var(--spacing-lg) var(--spacing-xl);
-  display: grid;
-  row-gap: var(--spacing-lg);
-}
-.settings-body section { display: grid; row-gap: var(--spacing-sm); }
-.settings-section h3 {
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: var(--spacing-xs);
-    margin-bottom: var(--spacing-sm);
-}
-.settings-body label { font-weight: 500; }
-
-input[type="range"].slider {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 8px;
-  border-radius: 4px;
-  background: var(--border-color);
-  outline: none;
-}
-input[type="range"].slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--accent-start);
-  cursor: pointer;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
-  transition: background var(--transition-speed) ease;
-}
-input[type="range"].slider:hover::-webkit-slider-thumb { background: var(--accent-end); }
-
-.settings-footer {
-  display: flex; /* Added for layout */
-  padding: var(--spacing-md) var(--spacing-lg); /* Added for padding */
-  background: var(--primary-bg);
-  justify-content: flex-end;
-  gap: var(--spacing-sm);
-  border-top: 1px solid var(--border-color); /* Added for separation */
-}
+/* 1. FIX: Modal visibility and positioning */
+.settings-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 2000;
+	display: none; /* Hidden by default */
+	align-items: center;
+	justify-content: center;
+	padding: var(--spacing-md);
+  }
+  
+  /* Show the modal when the .show class is added by JavaScript */
+  .settings-modal.show {
+	display: flex;
+  }
+  
+  .settings-overlay {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.65);
+	backdrop-filter: blur(6px);
+	animation: overlayFadeIn 0.3s ease forwards;
+  }
+  
+  .settings-content {
+	background: var(--secondary-bg);
+	border-radius: 1rem;
+	box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	max-height: 88vh;
+	width: 100%;
+	max-width: 600px; /* Increased max-width for better layout */
+	z-index: 1; /* Sits on top of the overlay */
+	animation: modalPopIn 0.3s ease-out forwards;
+	border: 1px solid var(--border-color);
+  }
+  
+  .settings-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: var(--spacing-md) var(--spacing-lg);
+	background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
+	color: #fff;
+	flex-shrink: 0;
+  }
+  .settings-header h2 { font-size: var(--font-size-xl); font-weight: 600; margin: 0; }
+  
+  .close-settings, .close-btn { /* Target both for safety */
+	background: transparent;
+	border: 0;
+	color: inherit;
+	font-size: 1.5rem;
+	line-height: 1;
+	cursor: pointer;
+	padding: var(--spacing-xs);
+	transition: transform var(--transition-speed) ease;
+  }
+  .close-settings:hover, .close-btn:hover { transform: scale(1.2) rotate(90deg); }
+  
+  .settings-body {
+	overflow-y: auto;
+	padding: var(--spacing-lg) var(--spacing-xl);
+	display: grid;
+	row-gap: var(--spacing-lg);
+  }
+  .settings-section h3 {
+	  border-bottom: 1px solid var(--border-color);
+	  padding-bottom: var(--spacing-xs);
+	  margin-bottom: var(--spacing-md);
+	  font-size: var(--font-size-lg);
+  }
+  .settings-section .sub-text {
+	  color: var(--text-secondary);
+	  font-size: var(--font-size-sm);
+	  margin: calc(-1 * var(--spacing-sm)) 0 var(--spacing-sm) 0;
+  }
+  
+  .setting-group {
+	  display: grid;
+	  grid-template-columns: 1fr 1fr;
+	  align-items: center;
+	  gap: var(--spacing-md);
+  }
+  .setting-label { font-weight: 500; }
+  
+  /* 2. FIX: Styling for "white box" form controls */
+  .setting-control {
+	background-color: var(--primary-bg);
+	color: var(--text-primary);
+	border: 1px solid var(--border-color);
+	border-radius: var(--border-radius);
+	padding: var(--spacing-xs) var(--spacing-sm);
+	font-size: var(--font-size-base);
+	width: 100%;
+	transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+  }
+  .setting-control:focus {
+	outline: none;
+	border-color: var(--accent-start);
+	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  }
+  
+  /* Custom Select Arrow */
+  select.setting-control {
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+	background-position: right 0.5rem center;
+	background-repeat: no-repeat;
+	background-size: 1.5em 1.5em;
+	padding-right: 2.5rem;
+  }
+  
+  /* Custom Checkbox */
+  .checkbox-group {
+	  grid-template-columns: auto 1fr; /* Adjust grid for checkbox */
+	  justify-content: start;
+	  gap: var(--spacing-sm);
+  }
+  .setting-checkbox {
+	  opacity: 0;
+	  width: 0;
+	  height: 0;
+	  position: absolute;
+  }
+  .checkbox-label {
+	  position: relative;
+	  cursor: pointer;
+	  padding-left: 2rem; /* Space for custom box */
+	  user-select: none;
+  }
+  .checkbox-label::before {
+	  content: '';
+	  position: absolute;
+	  left: 0;
+	  top: 50%;
+	  transform: translateY(-50%);
+	  width: 1.25rem;
+	  height: 1.25rem;
+	  background: var(--primary-bg);
+	  border: 1px solid var(--border-color);
+	  border-radius: 0.25rem;
+	  transition: all var(--transition-speed) ease;
+  }
+  .checkbox-label::after {
+	  content: '✔';
+	  position: absolute;
+	  left: 0.25rem;
+	  top: 50%;
+	  transform: translateY(-50%) scale(0);
+	  font-size: 1rem;
+	  color: white;
+	  transition: transform var(--transition-speed) ease-out;
+  }
+  .setting-checkbox:checked + .checkbox-label::before {
+	  background-color: var(--accent-start);
+	  border-color: var(--accent-start);
+  }
+  .setting-checkbox:checked + .checkbox-label::after {
+	  transform: translateY(-50%) scale(1);
+  }
+  .setting-checkbox:focus-visible + .checkbox-label::before {
+	  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  }
+  
+  /* Slider styling */
+  .slider-container { display: flex; align-items: center; gap: var(--spacing-sm); }
+  .slider-value { font-weight: 500; color: var(--text-secondary); }
+  input[type="range"].slider {
+	-webkit-appearance: none;
+	width: 100%;
+	height: 8px;
+	border-radius: 4px;
+	background: var(--border-color);
+	outline: none;
+  }
+  input[type="range"].slider::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 22px;
+	height: 22px;
+	border-radius: 50%;
+	background: var(--accent-start);
+	cursor: pointer;
+	box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+	transition: background var(--transition-speed) ease;
+  }
+  input[type="range"].slider:hover::-webkit-slider-thumb { background: var(--accent-end); }
+  
+  .settings-footer {
+	display: flex;
+	justify-content: space-between; /* Space out reset and save/cancel */
+	align-items: center;
+	padding: var(--spacing-md) var(--spacing-lg);
+	background: var(--primary-bg);
+	border-top: 1px solid var(--border-color);
+	flex-shrink: 0;
+  }
+  .footer-actions {
+	  display: flex;
+	  gap: var(--spacing-sm);
+  }
+  
+  @media (max-width: 600px) {
+	  .setting-group {
+		  grid-template-columns: 1fr;
+		  gap: var(--spacing-xs);
+	  }
+	  .settings-body {
+		  padding: var(--spacing-md);
+	  }
+  }
 
 /* Note: Assuming .feedback-message is a toast/notification element */
 .feedback-message {
