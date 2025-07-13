@@ -5,8 +5,3 @@ services:
     restart: unless-stopped
     ports:
       - "800:80"
-      - "4430:443"
-    environment:
-      # optional: pass Supabase keys at *build* time instead (see below)
-      - SUPA_URL=${SUPA_URL}
-      - SUPA_KEY=${SUPA_KEY}
