@@ -10,8 +10,10 @@
 /* styles.css */
 
 .app-header {
+  position: sticky;
+  top: 0;
+  background: var(--primary-bg); /* avoid content shining through */
   padding-top: calc(var(--safe-top) + var(--spacing-sm));
-  position: relative; /* Add this */
   z-index: 40; /* Add this */
   display: flex;
   justify-content: space-between;
@@ -140,19 +142,17 @@ body {
   min-height: 100vh;
 }
 
-/* ── Burger button ───────────────────────────── */
+/* MOBILE: burger sits *inside* the header row */
 .burger-btn{
-  background: var(--secondary-bg);
-  border: 2px solid var(--border-color);
-  border-radius: var(--border-radius);
-  font-size: 1.6rem;
-  padding: 0.25rem 0.8rem;
-  line-height: 1;
-  /* keep it above the sheet when open */
-  position:fixed;
-  top:calc(var(--safe-top) + 1rem);
-  right:1rem;
-  z-index:50;
+  position: relative;       /* was: fixed                  */
+  top: auto; right: auto;   /* kill the offsets            */
+  margin-left: auto;        /* pushes it to the right edge */
+  z-index: 10;              /* still above the drop-sheet  */
+}
+
+/* DESKTOP: keep hiding it as before */
+@media (min-width: 769px){
+  .burger-btn{ display:none; }
 }
 
 
@@ -161,7 +161,7 @@ body {
   margin-top:var(--safe-top);   /* avoid Dynamic Island overlap */
   position: absolute;
   top: calc(100% + 0.5rem);          /* directly below burger */
-  right: 0;
+  right: var(--safe-right);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
@@ -201,12 +201,6 @@ body {
 
 
 /* styles.css */
-
-/* desktop keeps original layout */
-@media (min-width: 769px) {
-  .burger-btn {
-    display: none;
-  }
 
   /* Reset mobile nav for desktop view */
   .mobile-nav {

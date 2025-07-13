@@ -6,7 +6,7 @@
 	<dict>
 		<key>App.debug.dylib</key>
 		<data>
-		pE6H3oLO2ee4wzi/EAYQJ1fxtmg=
+		jZ3Qcr5cPa8fXQgdJ4mAYf+4pHQ=
 		</data>
 		<key>AppIcon60x60@2x.png</key>
 		<data>
@@ -42,7 +42,7 @@
 		</data>
 		<key>Frameworks/Capacitor.framework/Capacitor</key>
 		<data>
-		o6EFti2/3aGvnmKqYLCNbfiG9Jg=
+		eX288NXCtpPZj+sKGIQMl42plVo=
 		</data>
 		<key>Frameworks/Capacitor.framework/Info.plist</key>
 		<data>
@@ -62,7 +62,7 @@
 		</data>
 		<key>Frameworks/CapacitorApp.framework/CapacitorApp</key>
 		<data>
-		NXUeKwbSTp+XjbszANqhYn+IIUA=
+		uoeEqybN19f5ERnnS+/GjlpONjM=
 		</data>
 		<key>Frameworks/CapacitorApp.framework/Info.plist</key>
 		<data>
@@ -74,7 +74,7 @@
 		</data>
 		<key>Frameworks/Cordova.framework/Cordova</key>
 		<data>
-		4g9D7WQfhRoWoC7QtrBf7CGeCg4=
+		GedrtRl7fl+M8ceDUUMzR4kMV5I=
 		</data>
 		<key>Frameworks/Cordova.framework/Info.plist</key>
 		<data>
@@ -90,7 +90,7 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		/F+dNWm5wYBrNpQUNOCppJ9wMhU=
+		e9wANDner2VV6stLv6LCtCuqg0A=
 		</data>
 		<key>PkgInfo</key>
 		<data>
@@ -98,7 +98,7 @@
 		</data>
 		<key>__preview.dylib</key>
 		<data>
-		7/EcycRVNBHOoc7wbXcPDNkf6tE=
+		hWIPLbYBVLev4IZQEScI+eh7CZM=
 		</data>
 		<key>capacitor.config.json</key>
 		<data>
@@ -147,7 +147,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			6Hc0a5mp9BxwOuAQWod9bnnLF/DC8XKHgYXaXvmLBSQ=
+			ORan+25r+9onef+LlQU2uMWKAuFh4jLhu9ebzzOJsk8=
 			</data>
 		</dict>
 		<key>AppIcon60x60@2x.png</key>
@@ -210,7 +210,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			PMzBH2ug1ZKvWuZCm4S8fn28XcMRkqXxMUNxDo0097M=
+			x8vKKMly5fDmGl7JUZ9+YqtLKJUgIxdhEVRsG0TWLyE=
 			</data>
 		</dict>
 		<key>Frameworks/Capacitor.framework/Info.plist</key>
@@ -245,7 +245,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			JQJG7o/V3nH8opygrqWPnKrI24Xk+kbISihuU5CnfuU=
+			Vl+0euCw96KD8FIK9s0R+n+TXoGD/Tak8XK3wPCMcpw=
 			</data>
 		</dict>
 		<key>Frameworks/CapacitorApp.framework/Info.plist</key>
@@ -266,7 +266,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			6DYWJwHG0lXmPLRntjAmk2IT84gJjvZsp6edxl+PPdc=
+			nbfiPFHNtLusdhNOUG2GsgnmL3drlzZAhes8uUZQpyU=
 			</data>
 		</dict>
 		<key>Frameworks/Cordova.framework/Info.plist</key>
@@ -294,7 +294,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			+Q6Tx1oE85zfOKcf5EZbf2Gb9ST1NVCJvb4XeFML6mA=
+			xnch4AV9pyvOjOGEbcZQJb74F92aF5hLd4laLRs3pfM=
 			</data>
 		</dict>
 		<key>capacitor.config.json</key>
