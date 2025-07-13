@@ -1,0 +1,8 @@
+{
+	"appId": "com.yourcompany.focusmatrix",
+	"appName": "FocusMatrix",
+	"webDir": "dist",
+	"packageClassList": [
+		"AppPlugin"
+	]
+}

@@ -7,7 +7,18 @@
  * • All original timer, DnD, export, accessibility code retained.
  * ------------------------------------------------------------------ */
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { createClient } from '@supabase/supabase-js';
+import { App as CapApp } from '@capacitor/app';            // NEW – Capacitor deep-link helper
+/* ------------------------------------------------------------------ */
+
+/* ── Deep-link handler: fires when a magic-link opens the IPA ── */
+CapApp.addListener('appUrlOpen', ({ url }) => {
+  if (url && url.startsWith('focusmatrix://auth-callback')) {
+    /* Relay the URL into the WebView so Supabase JS can read #access_token */
+    const webUrl = url.replace('focusmatrix://auth-callback', 'https://dummy.local/');
+    window.location.replace(webUrl);
+  }
+});
 
 /* ─────── Supabase keys (replace with env if bundling) ─────── */
 const SUPABASE_URL = "https://mzxeyosjcunoucmjgvln.supabase.co";
@@ -20,7 +31,14 @@ async function ensureAuth() {
   if (session?.user) return session.user;
   const email = prompt('Enter e‑mail to sync FocusMatrix across devices (magic‑link will be sent):');
   if (!email) return null;
-  const { error } = await supabase.auth.signInWithOtp({ email });
+  const isNative = window.location.protocol === 'capacitor:' || window.location.protocol === 'app:';
+  const redirectUrl = isNative ? 'focusmatrix://auth-callback'
+                               : 'https://pomodoro.thepi.es';
+  
+  await supabase.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: redirectUrl }
+  });
   if (error) { 
     alert('Sign‑in failed: ' + error.message); 
     return null; 
@@ -368,6 +386,9 @@ export class FocusMatrixCloud {
   /* ====================== EVENT BINDINGS ====================== */
   bindEvents() {
     /* Task input */
+    document.getElementById('burger').addEventListener('click', () => {
+      document.getElementById('mobileNav').classList.toggle('show');
+    });
     document.getElementById('addTaskBtn').addEventListener('click', () => this.handleAddTask());
     document.getElementById('taskInput').addEventListener('keypress', e => {
       if (e.key === 'Enter') this.handleAddTask();

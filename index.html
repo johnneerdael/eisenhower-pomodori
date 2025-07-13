@@ -10,18 +10,21 @@
   <link rel="stylesheet" href="styles-enhanced.css" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#3b82f6" />
+  <meta name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover" />
 </head>
 <body>
   <main class="app-container">
     <!-- ─────────────────────── Header ─────────────────────── -->
     <header class="app-header">
       <h1>FocusMatrix</h1>
-      <div class="header-controls">
-        <button id="progressToggle"  class="progress-toggle" aria-label="Toggle progress dashboard">📊 Progress</button>
-        <button id="focusToggle"     class="focus-toggle"    aria-label="Toggle focus mode">🎯 Focus</button>
-        <button id="exportBtn"       class="export-btn"      aria-label="Export data">💾 Export</button>
-        <button id="settingsBtn"     class="settings-btn"    aria-label="Open settings">⚙️ Settings</button>
-      </div>
+      <button id="burger" class="burger-btn" aria-label="Main menu">☰</button>
+      <nav id="mobileNav" class="mobile-nav">
+        <button id="focusToggle"  class="mobile-item">🎯 Focus</button>
+        <button id="progressToggle" class="mobile-item">📊 Progress</button>
+        <button id="exportBtn"   class="mobile-item">💾 Export</button>
+        <button id="settingsBtn" class="mobile-item">⚙️ Settings</button>
+      </nav>
     </header>
 
     <!-- ─────────────────────── Focus‑Timer Overlay ─────────────────────── -->
