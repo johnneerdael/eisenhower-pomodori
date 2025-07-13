@@ -12,7 +12,7 @@
   <meta name="theme-color" content="#3b82f6" />
   <meta name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+  <script src="Tone.js"></script>
 </head>
 <body>
   <main class="app-container">
@@ -195,7 +195,7 @@
           <div class="setting-group"><label for="themeSelect" class="setting-label">Color Theme</label><select id="themeSelect" class="setting-control"><option value="auto">Auto (System)</option><option value="light">Light</option><option value="dark">Dark</option><option value="high-contrast">High Contrast</option></select></div>
           <div class="setting-group"><label for="fontSizeSlider" class="setting-label">Font Size</label><div class="slider-container"><input id="fontSizeSlider" class="setting-control slider" type="range" min="12" max="24" value="16" step="1" /><span id="fontSizeValue" class="slider-value">16px</span></div></div>
         </section>
-        <section class="settings-section"></section>
+        <section class="settings-section">
           <h3>Auditory Feedback</h3>
           <div class="setting-group checkbox-group">
             <input id="soundEnabled" class="setting-checkbox" type="checkbox" />
@@ -210,7 +210,12 @@
               <option value="white-noise">White Noise</option>
             </select>
           </div>
+          <div class="setting-group checkbox-group">
+            <input id="tickingClockEnabled" class="setting-checkbox" type="checkbox" />
+            <label for="tickingClockEnabled" class="checkbox-label">Enable Ticking Clock during Focus</label>
+          </div>
         </section>
+        
         <!-- Goals -->
         <section class="settings-section">
           <h3>Your Life / Work Goals</h3>
