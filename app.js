@@ -211,18 +211,21 @@ class AudioRecorder {
       if (this.audioBlob) {
           const reader = new FileReader();
           reader.onloadend = async () => {
-              // The result is now an ArrayBuffer (raw bytes), not a string
-              const arrayBuffer = reader.result; 
-              this.currentTask.audioNote = arrayBuffer;
+              // Get the result as a data URL (e.g., "data:audio/webm;base64,ABC...")
+              const dataUrl = reader.result;
+              // Strip the prefix to store only the pure Base64 string
+              const base64String = dataUrl.split(',')[1];
+
+              this.currentTask.audioNote = base64String;
               await this.app.saveTasks();
               this.app.renderAllTasks();
               this.app.showFeedback('Audio note saved!', 'success');
               this.close();
           };
-          // Read the audio blob as an ArrayBuffer
-          reader.readAsArrayBuffer(this.audioBlob);
+          // Read the audio blob as a Data URL
+          reader.readAsDataURL(this.audioBlob);
       }
-  }
+    }
 
     startTimer() {
         let seconds = 0;
@@ -376,14 +379,13 @@ export class FocusMatrixCloud {
   }
 
   playAudioNote(task) {
-    if (!task.audioNote) {
-        this.showFeedback("No audio note found for this task.", "error");
+    if (!task.audioNote || typeof task.audioNote !== 'string') {
+        this.showFeedback("No valid audio note found.", "error");
         return;
     }
     try {
-        // Create a new Blob from the stored ArrayBuffer
-        const blob = new Blob([task.audioNote], { type: 'audio/webm' });
-        const audioUrl = URL.createObjectURL(blob);
+        // Re-create the data URL from the pure Base64 string
+        const audioUrl = `data:audio/webm;base64,${task.audioNote}`;
         const audio = new Audio(audioUrl);
         audio.play();
     } catch (error) {
@@ -621,34 +623,15 @@ export class FocusMatrixCloud {
         this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]');
         return;
       }
-      this.tasks = (data || []).map(dbTask => {
-        let audioBuffer = null;
-        // Check if audio_note exists and is a string (Base64 from Supabase)
-        if (dbTask.audio_note && typeof dbTask.audio_note === 'string') {
-          try {
-            // Convert the Base64 string from Supabase back to an ArrayBuffer
-            const binaryString = atob(dbTask.audio_note);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-              bytes[i] = binaryString.charCodeAt(i);
-            }
-            audioBuffer = bytes.buffer;
-          } catch (e) {
-            console.error("Failed to decode audio note from Base64:", e);
-          }
-        }
-
-        return {
-          id: `task_${dbTask.id}`,
-          database_id: dbTask.id,
-          text: dbTask.text,
-          quadrant: dbTask.quadrant,
-          goal: dbTask.goal || null,
-          created_at: dbTask.created_at,
-          audioNote: audioBuffer // Assign the converted buffer
-        };
-      });
+      this.tasks = (data || []).map(dbTask => ({
+        id: `task_${dbTask.id}`,
+        database_id: dbTask.id,
+        text: dbTask.text,
+        quadrant: dbTask.quadrant,
+        goal: dbTask.goal || null,
+        created_at: dbTask.created_at,
+        audioNote: dbTask.audio_note // Directly assign the Base64 string from Supabase
+      }));
     } else {
       this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]');
     }
