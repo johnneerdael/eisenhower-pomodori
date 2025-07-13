@@ -10,6 +10,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { App as CapApp } from '@capacitor/app';
 import * as Tone from 'tone';
+import 'dotenv/config';   
 
 /* ------------------------------------------------------------------ */
 
@@ -22,8 +23,8 @@ CapApp.addListener('appUrlOpen', ({ url }) => {
 });
 
 /* ─────── Supabase keys ─────── */
-const SUPABASE_URL = "https://mzxeyosjcunoucmjgvln.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16eGV5b3NqY3Vub3VjbWpndmxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzOTgyODIsImV4cCI6MjA2Nzk3NDI4Mn0.kXdS6Pvxt6Q62G5IOo_NZhc2jinTM7swfc7MfBxsJvE";
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = process.env.VITE_SUPABASE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ───────────────────────── Audio Manager (Refined) ─────────────────────── */

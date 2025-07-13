@@ -1,0 +1,9 @@
+.env
+Capacitor*
+dist
+Payload
+Pods*
+App.*
+ios
+android
+
