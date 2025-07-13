@@ -163,6 +163,18 @@ export class FocusMatrixCloud {
     this.progressMode = false;
     this.authManager = new AuthManager(this);
 
+    // app.js -> inside FocusMatrixCloud class
+
+    async handleLogout() {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error logging out:', error);
+        this.showFeedback('Error logging out. Please try again.', 'error');
+      } else {
+        // Reloading is the simplest way to reset the app state to the login screen
+        window.location.reload();
+      }
+    }
 
     /* Timer */
     this.timerRunning = false;
@@ -196,6 +208,8 @@ export class FocusMatrixCloud {
       // Wait for the user to log in successfully
       this.user = await this.authManager.authPromise;
     }
+    document.getElementById('logoutBtn').style.display = 'inline-flex';
+
 
     // Once authenticated, proceed with loading the app
     await this.loadSettings();
@@ -475,8 +489,9 @@ export class FocusMatrixCloud {
   /* ====================== EVENT BINDINGS ====================== */
   bindEvents() {
     /* Task input */
+    /* ▼ UPDATE THIS SECTION ▼ */
     document.getElementById('burger').addEventListener('click', () => {
-      document.getElementById('mobileNav').classList.toggle('show');
+      // This logic is now handled in the DOMContentLoaded listener at the bottom
     });
     document.getElementById('addTaskBtn').addEventListener('click', () => this.handleAddTask());
     document.getElementById('taskInput').addEventListener('keypress', e => {
@@ -488,6 +503,8 @@ export class FocusMatrixCloud {
     document.getElementById('focusToggle').addEventListener('click', () => this.toggleFocusMode());
     document.getElementById('exportBtn').addEventListener('click', () => this.quickExport());
     document.getElementById('settingsBtn').addEventListener('click', () => this.openSettings());
+    document.getElementById('logoutBtn').addEventListener('click', () => this.handleLogout());
+
 
     /* Timer & settings */
     this.bindTimerEvents();

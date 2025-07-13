@@ -469,3 +469,23 @@ body.focus-mode #focusTimer {
   color: var(--accent-start);
   text-decoration: underline;
 }
+
+/* styles-enhanced.css */
+
+/***** 7. Logout Button Styles *****/
+@media (min-width: 769px) {
+  #logoutBtn {
+    /* Pushes the logout button to the far right on desktop */
+    margin-left: auto; 
+    
+    /* Give it a distinct, but not alarming, color */
+    background-color: var(--q3-color);
+    border-color: var(--q3-border);
+  }
+  
+  #logoutBtn:hover,
+  #logoutBtn:focus {
+    background-color: var(--q3-border) !important;
+    color: var(--secondary-bg);
+  }
+}
