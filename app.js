@@ -27,117 +27,78 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ───────────────────────── Audio Manager (NEW & ROBUST) ─────────────────────── */
 class AudioManager {
-    constructor(app) {
-        this.app = app;
-        this.isInitialized = false; // Is the audio context and synths ready?
-        this.isInitializing = false; // Are we currently trying to initialize?
-        this.sounds = {};
-        this.activeSoundscape = null;
-        this.tickingLoop = null;
-    }
+  constructor(app) {
+      this.app = app;
+      this.isInitialized = false;
+      this.sounds = {};
+      this.activeSound = null; // Single property for any active sound
+  }
 
-    // This is the single point of entry for audio initialization.
-    // It's called by the user's first interaction that requires sound.
-    async init() {
-        // If already initialized, we're done.
-        if (this.isInitialized) return true;
-        // If currently initializing, wait for it to finish.
-        if (this.isInitializing) return false;
-        // If Tone.js script didn't load, we can never initialize.
-        if (typeof Tone === 'undefined') {
-            console.warn('Tone.js is not loaded. Audio features will be disabled.');
-            return false;
-        }
+  async init() {
+      if (this.isInitialized) return true;
+      try {
+          await Tone.start();
+          console.log('🔊 Audio context started.');
 
-        this.isInitializing = true;
-        try {
-            await Tone.start();
-            console.log('🔊 Audio context started.');
+          this.sounds.complete = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 } }).toDestination();
+          this.sounds.tick = new Tone.MembraneSynth({ pitchDecay: 0.008, octaves: 2, envelope: { attack: 0.001, decay: 0.2, sustain: 0 } }).toDestination();
+          this.sounds.tick.volume.value = -18;
+          
+          this.sounds.white = new Tone.Noise('white').toDestination();
+          this.sounds.pink = new Tone.Noise('pink').toDestination();
+          this.sounds.brown = new Tone.Noise('brown').toDestination();
+          
+          [this.sounds.white, this.sounds.pink, this.sounds.brown].forEach(n => n.volume.value = -20);
 
-            // Synthesizer for the 'complete' sound
-            this.sounds.complete = new Tone.Synth({
-                oscillator: { type: 'sine' },
-                envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 },
-            }).toDestination();
+          this.isInitialized = true;
+          return true;
+      } catch (e) {
+          console.error("Failed to initialize Tone.js:", e);
+          return false;
+      }
+  }
 
-            // Noise generators for soundscapes
-            this.sounds.rain = new Tone.Noise('pink').toDestination();
-            this.sounds.rain.volume.value = -20;
-            
-            this.sounds.whiteNoise = new Tone.Noise('white').toDestination();
-            this.sounds.whiteNoise.volume.value = -20;
+  playSound(soundName) {
+      if (!this.isInitialized || !this.app.settings.soundEnabled || !this.sounds[soundName]) return;
+      if (soundName === 'complete') {
+          this.sounds.complete.triggerAttackRelease('C5', '8n', Tone.now());
+      }
+  }
 
-            this.sounds.brownNoise = new Tone.Noise('brown').toDestination();
-            this.sounds.brownNoise.volume.value = -16;
+  // Unified function to start whatever sound is selected in settings
+  updateSoundscape() {
+      this.stopSoundscape(); // Stop anything currently playing
+      if (!this.isInitialized || !this.app.settings.soundEnabled) return;
 
-            // Synthesizer for the ticking clock
-            this.sounds.tick = new Tone.MembraneSynth({
-                pitchDecay: 0.008,
-                octaves: 2,
-                envelope: { attack: 0.001, decay: 0.2, sustain: 0 },
-            }).toDestination();
-            this.sounds.tick.volume.value = -18;
+      const type = this.app.settings.soundscape;
+      if (type === 'none') return;
 
-            this.isInitialized = true; // Set flag only on successful initialization
-            return true;
-        } catch (e) {
-            console.error("Failed to initialize Tone.js AudioContext:", e);
-            return false;
-        } finally {
-            this.isInitializing = false;
-        }
-    }
+      if (type === 'ticking') {
+          this.activeSound = new Tone.Loop(time => {
+              this.sounds.tick.triggerAttackRelease('C4', '32n', time);
+          }, '1s').start(0);
+      } else if (this.sounds[type]) {
+          this.activeSound = this.sounds[type];
+      }
+      
+      if (this.activeSound) {
+          this.activeSound.start();
+          Tone.Transport.start();
+      }
+  }
 
-    // Guard every public method with a check for initialization.
-    playSound(soundName) {
-        if (!this.isInitialized || !this.app.settings.soundEnabled || !this.sounds[soundName]) return;
-        
-        if (soundName === 'complete' && this.sounds.complete) {
-            this.sounds.complete.triggerAttackRelease('C5', '8n', Tone.now());
-        }
-    }
-
-    startTicking() {
-        if (!this.isInitialized || !this.app.settings.soundEnabled || !this.app.settings.tickingEnabled || this.tickingLoop) return;
-        
-        this.tickingLoop = new Tone.Loop(time => {
-            if (this.sounds.tick) {
-                this.sounds.tick.triggerAttackRelease('C4', '32n', time);
-            }
-        }, '1s').start(0);
-        Tone.Transport.start();
-    }
-
-    stopTicking() {
-        if (!this.isInitialized || !this.tickingLoop) return;
-        
-        this.tickingLoop.stop(0).dispose();
-        this.tickingLoop = null;
-        if (!this.activeSoundscape) {
-            Tone.Transport.stop();
-        }
-    }
-
-    startSoundscape() {
-        if (!this.isInitialized) return;
-        this.stopSoundscape(); 
-        const type = this.app.settings.soundscape;
-        if (!this.app.settings.soundEnabled || type === 'none' || !this.sounds[type]) return;
-
-        this.activeSoundscape = this.sounds[type];
-        this.activeSoundscape.start();
-        Tone.Transport.start();
-    }
-
-    stopSoundscape() {
-        if (!this.isInitialized || !this.activeSoundscape) return;
-        
-        this.activeSoundscape.stop();
-        this.activeSoundscape = null;
-        if (!this.tickingLoop) {
-            Tone.Transport.stop();
-        }
-    }
+  // Unified function to stop all background sounds
+  stopSoundscape() {
+      if (this.activeSound) {
+          this.activeSound.stop();
+          // Important: Dispose loops, but not the shared noise instances
+          if (this.activeSound instanceof Tone.Loop) {
+              this.activeSound.dispose();
+          }
+          this.activeSound = null;
+          Tone.Transport.stop();
+      }
+  }
 }
 
 
