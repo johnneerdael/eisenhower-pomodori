@@ -4,11 +4,12 @@
  * • Adds Tone.js for dynamic, file-free audio generation.
  * • New AudioManager class handles all sound logic.
  * • Settings for soundscapes (rain, noise) and ticking clock.
+ * • NEW: Audio note recording per task using MediaRecorder API.
  * ------------------------------------------------------------------ */
 
 import { createClient } from '@supabase/supabase-js';
 import { App as CapApp } from '@capacitor/app';
-import * as Tone from 'tone'; // NEW: Import Tone.js as a module
+import * as Tone from 'tone';
 
 /* ------------------------------------------------------------------ */
 
@@ -25,127 +26,216 @@ const SUPABASE_URL = "https://mzxeyosjcunoucmjgvln.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16eGV5b3NqY3Vub3VjbWpndmxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzOTgyODIsImV4cCI6MjA2Nzk3NDI4Mn0.kXdS6Pvxt6Q62G5IOo_NZhc2jinTM7swfc7MfBxsJvE";
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* ───────────────────────── Audio Manager (NEW & ROBUST) ─────────────────────── */
+/* ───────────────────────── Audio Manager (Refined) ─────────────────────── */
 class AudioManager {
-  constructor(app) {
-      this.app = app;
-      this.isInitialized = false;
-      this.sounds = {};
-      this.activeSound = null; // Single property for any active sound
-  }
+    constructor(app) {
+        this.app = app;
+        this.isInitialized = false;
+        this.isInitializing = false;
+        this.sounds = {};
+        this.activeSoundscape = null;
+    }
 
-  async init() {
-      if (this.isInitialized) return true;
-      try {
-          await Tone.start();
-          console.log('🔊 Audio context started.');
+    async init() {
+        if (this.isInitialized || this.isInitializing) return this.isInitialized;
+        this.isInitializing = true;
+        try {
+            await Tone.start();
+            console.log('🔊 Audio context started.');
 
-          this.sounds.complete = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 } }).toDestination();
-          this.sounds.tick = new Tone.MembraneSynth({ pitchDecay: 0.008, octaves: 2, envelope: { attack: 0.001, decay: 0.2, sustain: 0 } }).toDestination();
-          this.sounds.tick.volume.value = -18;
-          
-          this.sounds.white = new Tone.Noise('white').toDestination();
-          this.sounds.pink = new Tone.Noise('pink').toDestination();
-          this.sounds.brown = new Tone.Noise('brown').toDestination();
-          
-          [this.sounds.white, this.sounds.pink, this.sounds.brown].forEach(n => n.volume.value = -20);
+            // Timer completion sound
+            this.sounds.complete = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 } }).toDestination();
 
-          this.isInitialized = true;
-          return true;
-      } catch (e) {
-          console.error("Failed to initialize Tone.js:", e);
-          return false;
-      }
-  }
+            // Ticking clock sound
+            this.sounds.ticking = new Tone.Loop(time => {
+                const tickSynth = new Tone.MembraneSynth({ pitchDecay: 0.008, octaves: 2, envelope: { attack: 0.001, decay: 0.2, sustain: 0 } }).toDestination();
+                tickSynth.volume.value = -18;
+                tickSynth.triggerAttackRelease('C4', '32n', time);
+            }, '1s');
 
-  playSound(soundName) {
-      if (!this.isInitialized || !this.app.settings.soundEnabled || !this.sounds[soundName]) return;
-      if (soundName === 'complete') {
-          this.sounds.complete.triggerAttackRelease('C5', '8n', Tone.now());
-      }
-  }
+            // Noise generators
+            this.sounds['white-noise'] = new Tone.Noise('white').toDestination();
+            this.sounds['pink-noise'] = new Tone.Noise('pink').toDestination();
+            this.sounds['brown-noise'] = new Tone.Noise('brown').toDestination();
+            this.sounds['white-noise'].volume.value = -24;
+            this.sounds['pink-noise'].volume.value = -22;
+            this.sounds['brown-noise'].volume.value = -20;
 
-  // Unified function to start whatever sound is selected in settings
-  updateSoundscape() {
-      this.stopSoundscape(); // Stop anything currently playing
-      if (!this.isInitialized || !this.app.settings.soundEnabled) return;
+            // Melodic Soundscapes
+            const padSynth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: "fatsawtooth", count: 3, spread: 30 }, envelope: { attack: 1, decay: 0.1, sustain: 0.5, release: 0.8, attackCurve: "exponential" } }).toDestination();
+            padSynth.volume.value = -12;
+            this.sounds['synth-pad'] = new Tone.Sequence((time, note) => {
+                padSynth.triggerAttackRelease(note, "2n", time);
+            }, ["C2", ["E2", "G2"], "A1", ["A1", "C2", "E2"]], "1m");
 
-      const type = this.app.settings.soundscape;
-      if (type === 'none') return;
+            const kalimbaSynth = new Tone.MetalSynth({ frequency: 200, envelope: { attack: 0.001, decay: 1.4, release: 0.2 }, harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5 }).toDestination();
+            kalimbaSynth.volume.value = -8;
+            this.sounds.kalimba = new Tone.Sequence((time, note) => {
+                kalimbaSynth.triggerAttackRelease(note, "8n", time);
+            }, ["G4", "A4", "C5", "D5", "G5"], "4n");
 
-      if (type === 'ticking') {
-          this.activeSound = new Tone.Loop(time => {
-              this.sounds.tick.triggerAttackRelease('C4', '32n', time);
-          }, '1s').start(0);
-      } else if (this.sounds[type]) {
-          this.activeSound = this.sounds[type];
-      }
-      
-      if (this.activeSound) {
-          this.activeSound.start();
-          Tone.Transport.start();
-      }
-  }
+            this.isInitialized = true;
+            return true;
+        } catch (e) {
+            console.error("Failed to initialize Tone.js:", e);
+            return false;
+        } finally {
+            this.isInitializing = false;
+        }
+    }
 
-  // Unified function to stop all background sounds
-  stopSoundscape() {
-      if (this.activeSound) {
-          this.activeSound.stop();
-          // Important: Dispose loops, but not the shared noise instances
-          if (this.activeSound instanceof Tone.Loop) {
-              this.activeSound.dispose();
-          }
-          this.activeSound = null;
-          Tone.Transport.stop();
-      }
-  }
+    playSound(soundName) {
+        if (!this.isInitialized || !this.app.settings.soundEnabled || !this.sounds[soundName]) return;
+        if (soundName === 'complete') {
+            this.sounds.complete.triggerAttackRelease('C5', '8n', Tone.now());
+        }
+    }
+
+    startSoundscape() {
+        if (!this.isInitialized || !this.app.settings.soundEnabled) return;
+        this.stopSoundscape(); 
+        const type = this.app.settings.soundscape;
+        if (type === 'none' || !this.sounds[type]) return;
+
+        this.activeSoundscape = this.sounds[type];
+        this.activeSoundscape.start(0);
+        Tone.Transport.start();
+    }
+
+    stopSoundscape() {
+        if (this.activeSoundscape) {
+            this.activeSoundscape.stop(0);
+            this.activeSoundscape = null;
+            Tone.Transport.stop();
+        }
+    }
 }
 
+/* ───────────────────────── Audio Recorder Manager (NEW) ─────────────────────── */
+class AudioRecorder {
+    constructor(app) {
+        this.app = app;
+        this.mediaRecorder = null;
+        this.audioChunks = [];
+        this.currentTask = null;
+        this.recordingTimer = null;
+        this.audioBlob = null;
+        
+        this.modal = document.getElementById('audioRecordModal');
+        this.taskTextEl = document.getElementById('audioRecordTaskText');
+        this.recordBtn = document.getElementById('audioRecordBtn');
+        this.stopBtn = document.getElementById('audioStopBtn');
+        this.playBtn = document.getElementById('audioPlayBtn');
+        this.saveBtn = document.getElementById('audioSaveBtn');
+        this.cancelBtn = document.getElementById('audioCancelBtn');
+        this.timerEl = document.querySelector('.audio-record-timer');
+    }
 
-/* ───────────────────────── Auth UI Manager ─────────────────────── */
-class AuthManager {
-  constructor(app) {
-    this.app = app;
-    this.container = document.getElementById('authContainer');
-    this.form = document.getElementById('authForm');
-    this.emailInput = document.getElementById('authEmail');
-    this.passwordInput = document.getElementById('authPassword');
-    this.loginBtn = document.getElementById('loginBtn');
-    this.signupBtn = document.getElementById('signupBtn');
-    this.resetLink = document.getElementById('resetPasswordLink');
-    this.feedback = document.getElementById('authFeedback');
-    this.authPromise = new Promise(resolve => { this.resolveAuth = resolve; });
-  }
-  show() { this.container.style.display = 'flex'; }
-  hide() { this.container.style.display = 'none'; }
-  bindEvents() {
-    this.form.addEventListener('submit', async (e) => {
-      e.preventDefault(); this.setLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({ email: this.emailInput.value, password: this.passwordInput.value });
-      if (error) { this.showFeedback(error.message, 'error'); } 
-      else if (data.user) { this.showFeedback('Success! Loading your matrix...', 'success'); this.app.user = data.user; this.resolveAuth(data.user); setTimeout(() => this.hide(), 1000); }
-      this.setLoading(false);
-    });
-    this.signupBtn.addEventListener('click', async () => {
-      this.setLoading(true);
-      const { data, error } = await supabase.auth.signUp({ email: this.emailInput.value, password: this.passwordInput.value });
-      if (error) { this.showFeedback(error.message, 'error'); } 
-      else { this.showFeedback('Success! Check your email for a confirmation link.', 'success'); }
-      this.setLoading(false);
-    });
-    this.resetLink.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const email = this.emailInput.value;
-        if (!email) { this.showFeedback('Please enter your email address first.', 'error'); return; }
-        this.setLoading(true);
-        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://pomodoro.thepi.es' });
-        if (error) { this.showFeedback(error.message, 'error'); } 
-        else { this.showFeedback('Password reset link sent! Check your email.', 'success'); }
-        this.setLoading(false);
-    });
-  }
-  showFeedback(message, type = 'info') { this.feedback.textContent = message; this.feedback.className = `auth-feedback ${type}`; this.feedback.style.display = 'block'; }
-  setLoading(isLoading) { this.loginBtn.disabled = isLoading; this.signupBtn.disabled = isLoading; this.loginBtn.textContent = isLoading ? '...' : 'Log In'; }
+    async open(task) {
+        this.currentTask = task;
+        this.taskTextEl.textContent = `For task: "${task.text}"`;
+        this.reset();
+        this.modal.style.display = 'flex';
+        this.bindEvents();
+    }
+
+    close() {
+        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+            this.stopRecording();
+        }
+        this.modal.style.display = 'none';
+        this.currentTask = null;
+        this.audioBlob = null;
+        this.audioChunks = [];
+    }
+    
+    reset() {
+        this.recordBtn.style.display = 'inline-flex';
+        this.stopBtn.style.display = 'none';
+        this.playBtn.disabled = true;
+        this.saveBtn.disabled = true;
+        this.timerEl.textContent = '00:00';
+    }
+
+    bindEvents() {
+        this.recordBtn.onclick = () => this.startRecording();
+        this.stopBtn.onclick = () => this.stopRecording();
+        this.playBtn.onclick = () => this.playRecording();
+        this.saveBtn.onclick = () => this.saveRecording();
+        this.cancelBtn.onclick = () => this.close();
+    }
+
+    async startRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            this.mediaRecorder = new MediaRecorder(stream);
+            this.mediaRecorder.ondataavailable = event => {
+                this.audioChunks.push(event.data);
+            };
+            this.mediaRecorder.onstop = () => {
+                this.audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                this.playBtn.disabled = false;
+                this.saveBtn.disabled = false;
+            };
+            
+            this.audioChunks = [];
+            this.mediaRecorder.start();
+            this.startTimer();
+
+            this.recordBtn.style.display = 'none';
+            this.stopBtn.style.display = 'inline-flex';
+        } catch (err) {
+            console.error("Error starting recording:", err);
+            this.app.showFeedback("Could not start recording. Check microphone permissions.", "error");
+        }
+    }
+
+    stopRecording() {
+        if (this.mediaRecorder) {
+            this.mediaRecorder.stop();
+            this.stopTimer();
+            this.recordBtn.style.display = 'inline-flex';
+            this.stopBtn.style.display = 'none';
+        }
+    }
+
+    playRecording() {
+        if (this.audioBlob) {
+            const audioUrl = URL.createObjectURL(this.audioBlob);
+            const audio = new Audio(audioUrl);
+            audio.play();
+        }
+    }
+
+    async saveRecording() {
+        if (this.audioBlob) {
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+                const base64data = reader.result;
+                this.currentTask.audioNote = base64data;
+                await this.app.saveTasks();
+                this.app.renderAllTasks();
+                this.app.showFeedback('Audio note saved!', 'success');
+                this.close();
+            };
+            reader.readAsDataURL(this.audioBlob);
+        }
+    }
+
+    startTimer() {
+        let seconds = 0;
+        this.timerEl.textContent = '00:00';
+        this.recordingTimer = setInterval(() => {
+            seconds++;
+            const min = String(Math.floor(seconds / 60)).padStart(2, '0');
+            const sec = String(seconds % 60).padStart(2, '0');
+            this.timerEl.textContent = `${min}:${sec}`;
+        }, 1000);
+    }
+
+    stopTimer() {
+        clearInterval(this.recordingTimer);
+    }
 }
 
 /* ==================================================================
@@ -167,7 +257,6 @@ export class FocusMatrixCloud {
       sessionsPerCycle: 4,
       goals: [],
       soundscape: 'none',
-      tickingEnabled: false,
     };
     this.stats = { tasksAddedToday: 0, tasksCompletedToday: 0, tasksEliminatedToday: 0, focusSessionsToday: 0, dailyStreak: 0, focusStreak: 0, totalEliminated: 0, lastUsedDate: null, achievements: { firstStep: false, focusStarter: false, goodJudgment: false } };
     this.user = null;
@@ -178,6 +267,7 @@ export class FocusMatrixCloud {
     this.progressMode = false;
     this.authManager = new AuthManager(this);
     this.audioManager = new AudioManager(this);
+    this.audioRecorder = new AudioRecorder(this);
     this.focusedTask = null;
 
     this.handleLogout = async () => {
@@ -242,16 +332,29 @@ export class FocusMatrixCloud {
     el.className = 'task-item';
     el.draggable = true;
     el.dataset.taskId = task.id;
-    const badge = task.goal ? `<span class="goal-badge" title="${this.escapeHtml(task.goal)}">🎯 ${this.escapeHtml(task.goal)}</span>` : '';
-    el.innerHTML = `<div class="task-text">${this.escapeHtml(task.text)} ${badge}</div><div class="task-actions"><button class="task-action-btn focus-task-btn" aria-label="Focus on this task">🎯</button><button class="task-action-btn delete-btn" aria-label="Delete">🗑️</button></div>`;
+    const goalBadge = task.goal ? `<span class="goal-badge" title="${this.escapeHtml(task.goal)}">🎯 ${this.escapeHtml(task.goal)}</span>` : '';
+    const audioBadge = task.audioNote ? `<span class="audio-note-indicator">🎵</span>` : '';
+    el.innerHTML = `
+      <div class="task-text">${this.escapeHtml(task.text)} ${goalBadge} ${audioBadge}</div>
+      <div class="task-actions">
+        <button class="task-action-btn record-audio-btn" aria-label="Record audio note">🎤</button>
+        <button class="task-action-btn focus-task-btn" aria-label="Focus on this task">🎯</button>
+        <button class="task-action-btn delete-btn" aria-label="Delete">🗑️</button>
+      </div>
+    `;
+
     el.addEventListener('dragstart', e => { this.draggedTask = task; e.currentTarget.classList.add('dragging'); });
     el.addEventListener('dragend', e => e.currentTarget.classList.remove('dragging'));
     el.addEventListener('dblclick', () => this.editTask(task));
+    
     el.querySelector('.focus-task-btn').addEventListener('click', (e) => { e.stopPropagation(); this.startFocusOnTask(task); });
     el.querySelector('.delete-btn').addEventListener('click', e => { e.stopPropagation(); this.deleteTask(task.id); });
+    el.querySelector('.record-audio-btn').addEventListener('click', (e) => { e.stopPropagation(); this.audioRecorder.open(task); });
+
     el.addEventListener('touchstart', e => this.handleTouchStart(e));
     el.addEventListener('touchmove', e => this.handleTouchMove(e, el));
     el.addEventListener('touchend', e => this.handleTouchEnd(e, task, el));
+
     document.getElementById(`q${task.quadrant}-tasks`).appendChild(el);
     this.updateEmptyStates();
   }
@@ -281,7 +384,6 @@ export class FocusMatrixCloud {
     document.getElementById('matrixContainer').classList.remove('focus-active');
     document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('is-focus-target'));
     this.audioManager.stopSoundscape();
-    this.audioManager.stopTicking();
   }
 
   showTriageModal() {
@@ -315,12 +417,12 @@ export class FocusMatrixCloud {
   /* ====================== TIMER LOGIC (MODIFIED) ====================== */
   async startTimer() {
     if (this.timerRunning) return;
-    const audioReady = await this.audioManager.init();
+    await this.audioManager.init();
     this.timerRunning = true;
     document.getElementById('startTimer').style.display = 'none';
     document.getElementById('pauseTimer').style.display = 'inline-block';
-    if (audioReady && this.timerMode === 'focus') {
-        this.audioManager.startTicking();
+    if (this.timerMode === 'focus') {
+        this.audioManager.startSoundscape();
     }
     this.focusTimer = setInterval(() => {
       if (!this.timerRunning) return;
@@ -336,7 +438,7 @@ export class FocusMatrixCloud {
     this.timerRunning = false;
     document.getElementById('startTimer').style.display = 'inline-block';
     document.getElementById('pauseTimer').style.display = 'none';
-    this.audioManager.stopTicking();
+    this.audioManager.stopSoundscape();
   }
   
   timerComplete() {
@@ -390,7 +492,6 @@ export class FocusMatrixCloud {
     document.getElementById('achievementsEnabled').checked = this.settings.achievementsEnabled;
     document.getElementById('soundEnabled').checked = this.settings.soundEnabled;
     document.getElementById('soundscapeSelect').value = this.settings.soundscape;
-    document.getElementById('tickingClockEnabled').checked = this.settings.tickingEnabled;
     ['goal1', 'goal2', 'goal3'].forEach((id, i) => { document.getElementById(id).value = this.settings.goals[i] || ''; });
   }
 
@@ -405,7 +506,6 @@ export class FocusMatrixCloud {
     this.settings.achievementsEnabled = document.getElementById('achievementsEnabled').checked;
     this.settings.soundEnabled = document.getElementById('soundEnabled').checked;
     this.settings.soundscape = document.getElementById('soundscapeSelect').value;
-    this.settings.tickingEnabled = document.getElementById('tickingClockEnabled').checked;
     this.settings.goals = [...new Set(['goal1', 'goal2', 'goal3'].map(id => document.getElementById(id).value.trim()).filter(Boolean))].slice(0, 3);
     await this.saveSettings();
     this.applySettings();
@@ -420,8 +520,8 @@ export class FocusMatrixCloud {
 
   /* ====================== UNCHANGED METHODS ====================== */
   get isOnline() { return navigator.onLine && !!this.user; }
-  async loadTasks() { if (this.isOnline) { const { data, error } = await supabase.from('tasks').select('*').eq('user_id', this.user.id).order('created_at'); if (error) { this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]'); return; } this.tasks = (data || []).map(dbTask => ({ id: `task_${dbTask.id}`, database_id: dbTask.id, text: dbTask.text, quadrant: dbTask.quadrant, goal: dbTask.goal || null, created_at: dbTask.created_at })); } else { this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]'); } }
-  async saveTasks() { if (this.isOnline) { const newTasks = this.tasks.filter(t => !t.database_id); const existingTasks = this.tasks.filter(t => t.database_id); if (newTasks.length > 0) { const insertData = newTasks.map(t => ({ user_id: this.user.id, text: t.text, quadrant: t.quadrant, goal: t.goal, created_at: t.created_at, updated_at: new Date().toISOString() })); const { data: insertedTasks, error: insertError } = await supabase.from('tasks').insert(insertData).select(); if (!insertError && insertedTasks) { insertedTasks.forEach((dbTask, index) => { const localTask = newTasks[index]; if (localTask) localTask.database_id = dbTask.id; }); } } if (existingTasks.length > 0) { const updates = existingTasks.map(t => ({ id: t.database_id, user_id: this.user.id, text: t.text, quadrant: t.quadrant, goal: t.goal, updated_at: new Date().toISOString() })); await supabase.from('tasks').upsert(updates); } } localStorage.setItem('focusmatrix_ultimate_tasks', JSON.stringify(this.tasks)); }
+  async loadTasks() { if (this.isOnline) { const { data, error } = await supabase.from('tasks').select('*').eq('user_id', this.user.id).order('created_at'); if (error) { this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]'); return; } this.tasks = (data || []).map(dbTask => ({ id: `task_${dbTask.id}`, database_id: dbTask.id, text: dbTask.text, quadrant: dbTask.quadrant, goal: dbTask.goal || null, created_at: dbTask.created_at, audioNote: dbTask.audio_note })); } else { this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]'); } }
+  async saveTasks() { if (this.isOnline) { const newTasks = this.tasks.filter(t => !t.database_id); const existingTasks = this.tasks.filter(t => t.database_id); if (newTasks.length > 0) { const insertData = newTasks.map(t => ({ user_id: this.user.id, text: t.text, quadrant: t.quadrant, goal: t.goal, created_at: t.created_at, updated_at: new Date().toISOString(), audio_note: t.audioNote })); const { data: insertedTasks, error: insertError } = await supabase.from('tasks').insert(insertData).select(); if (!insertError && insertedTasks) { insertedTasks.forEach((dbTask, index) => { const localTask = newTasks[index]; if (localTask) localTask.database_id = dbTask.id; }); } } if (existingTasks.length > 0) { const updates = existingTasks.map(t => ({ id: t.database_id, user_id: this.user.id, text: t.text, quadrant: t.quadrant, goal: t.goal, updated_at: new Date().toISOString(), audio_note: t.audioNote })); await supabase.from('tasks').upsert(updates); } } localStorage.setItem('focusmatrix_ultimate_tasks', JSON.stringify(this.tasks)); }
   async loadSettings() { const defaults = this.settings; if (this.isOnline) { try { const { data, error } = await supabase.from('settings').select('data').eq('user_id', this.user?.id).single(); if (error && error.code !== 'PGRST116') console.error('Error loading settings:', error); const cloud = data?.data || {}; const local = JSON.parse(localStorage.getItem('focusmatrix_ultimate_settings') || '{}'); this.settings = { ...defaults, ...cloud, ...local }; } catch (error) { this.settings = { ...defaults, ...JSON.parse(localStorage.getItem('focusmatrix_ultimate_settings') || '{}') }; } } else { this.settings = { ...defaults, ...JSON.parse(localStorage.getItem('focusmatrix_ultimate_settings') || '{}') }; } }
   async saveSettings() { if (this.isOnline) { await supabase.from('settings').upsert({ user_id: this.user.id, data: this.settings }); } localStorage.setItem('focusmatrix_ultimate_settings', JSON.stringify(this.settings)); this.updateGoalSelect(); }
   async loadStats() { const today = new Date().toISOString().split('T')[0]; if (this.isOnline) { const { data, error } = await supabase.from('daily_stats').select('*').eq('user_id', this.user.id).eq('day', today).single(); if (error && error.code !== 'PGRST116') console.error('Error loading stats:', error); if (data) { this.stats = { ...this.stats, ...data, tasksAddedToday: data.tasks_added || 0, tasksCompletedToday: data.tasks_completed || 0, tasksEliminatedToday: data.tasks_eliminated || 0, focusSessionsToday: data.focus_sessions || 0, lastUsedDate: today, day: today }; } else { this.stats.tasksAddedToday = 0; this.stats.tasksCompletedToday = 0; this.stats.tasksEliminatedToday = 0; this.stats.focusSessionsToday = 0; this.stats.lastUsedDate = today; this.stats.day = today; } } else { this.stats = JSON.parse(localStorage.getItem('focusmatrix_ultimate_stats') || '{}') || { ...this.stats }; if (this.stats.day !== today) this.stats = { ...this.stats, day: today }; } }

@@ -44,7 +44,6 @@
         <header class="timer-header">
           <div class="timer-session-info">
             <h3 id="timerSessionTitle">Time to Focus!</h3>
-            <!-- ▼ NEW: Display current task ▼ -->
             <p id="timerTaskText" class="timer-task-text">Your most important task</p>
             <span id="timerSessionCount" class="timer-session-count">Session 1 of 4</span>
           </div>
@@ -194,24 +193,28 @@
           <div class="setting-group"><label for="themeSelect" class="setting-label">Color Theme</label><select id="themeSelect" class="setting-control"><option value="auto">Auto (System)</option><option value="light">Light</option><option value="dark">Dark</option><option value="high-contrast">High Contrast</option></select></div>
           <div class="setting-group"><label for="fontSizeSlider" class="setting-label">Font Size</label><div class="slider-container"><input id="fontSizeSlider" class="setting-control slider" type="range" min="12" max="24" value="16" step="1" /><span id="fontSizeValue" class="slider-value">16px</span></div></div>
         </section>
+        
+        <!-- Audio Settings Section -->
         <section class="settings-section">
           <h3>Auditory Feedback</h3>
+          <p class="sub-text">Enable a soundscape to play during focus sessions.</p>
           <div class="setting-group checkbox-group">
             <input id="soundEnabled" class="setting-checkbox" type="checkbox" />
-            <label for="soundEnabled" class="checkbox-label">Enable All Sounds</label>
+            <label for="soundEnabled" class="checkbox-label">Enable Timer Sounds</label>
           </div>
           <div class="setting-group">
             <label for="soundscapeSelect" class="setting-label">Focus Soundscape</label>
             <select id="soundscapeSelect" class="setting-control">
               <option value="none">None</option>
               <option value="ticking">Ticking Clock</option>
-              <option value="white">White Noise</option>
-              <option value="pink">Pink Noise</option>
-              <option value="brown">Brown Noise</option>
+              <option value="synth-pad">Synth Pad</option>
+              <option value="kalimba">Kalimba</option>
+              <option value="white-noise">White Noise</option>
+              <option value="pink-noise">Pink Noise</option>
+              <option value="brown-noise">Brown Noise</option>
             </select>
           </div>
         </section>
-        
         
         <!-- Goals -->
         <section class="settings-section">
@@ -229,7 +232,6 @@
           <div class="setting-group"><label for="shortBreakDuration" class="setting-label">Short Break</label><select id="shortBreakDuration" class="setting-control"><option value="5" selected>5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option></select></div>
           <div class="setting-group"><label for="longBreakDuration" class="setting-label">Long Break</label><select id="longBreakDuration" class="setting-control"><option value="15">15 minutes</option><option value="20">20 minutes</option><option value="30" selected>30 minutes</option></select></div>
           <div class="setting-group"><label for="sessionsPerCycle" class="setting-label">Sessions per Cycle</label><select id="sessionsPerCycle" class="setting-control"><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option></select></div>
-          <div class="setting-group checkbox-group"><input id="soundEnabled" class="setting-checkbox" type="checkbox" /><label for="soundEnabled" class="checkbox-label">Enable Sound Effects</label></div>
           <div class="setting-group checkbox-group"><input id="achievementsEnabled" class="setting-checkbox" type="checkbox" checked /><label for="achievementsEnabled" class="checkbox-label">Show Achievement Notifications</label></div>
         </section>
         <!-- Data Mgmt -->
@@ -243,7 +245,7 @@
     </div>
   </div>
   
-  <!-- ▼ NEW: Post-Pomodoro Triage Modal ▼ -->
+  <!-- Post-Pomodoro Triage Modal -->
   <div id="triageModal" class="triage-modal" style="display: none;">
     <div class="triage-box">
         <h4>Session Complete!</h4>
@@ -253,6 +255,25 @@
             <button id="triageCompleteBtn" class="btn btn-primary">✅ Yes, it's done!</button>
             <button id="triageIncompleteBtn" class="btn btn-secondary">❌ Not yet</button>
         </div>
+    </div>
+  </div>
+
+  <!-- Audio Recording Modal -->
+  <div id="audioRecordModal" class="audio-record-modal" style="display: none;">
+    <div class="audio-record-box">
+      <h4>Record Audio Note</h4>
+      <p id="audioRecordTaskText"></p>
+      <div id="audioVisualizer" class="audio-visualizer"></div>
+      <div class="audio-record-timer">00:00</div>
+      <div class="audio-record-controls">
+        <button id="audioRecordBtn" class="btn btn-danger">🔴 Record</button>
+        <button id="audioStopBtn" class="btn btn-secondary" style="display: none;">⏹️ Stop</button>
+        <button id="audioPlayBtn" class="btn btn-secondary" disabled>▶️ Play</button>
+      </div>
+      <div class="audio-record-footer">
+        <button id="audioCancelBtn" class="btn btn-secondary">Cancel</button>
+        <button id="audioSaveBtn" class="btn btn-primary" disabled>Save Note</button>
+      </div>
     </div>
   </div>
 
