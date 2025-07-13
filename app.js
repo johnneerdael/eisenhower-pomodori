@@ -222,7 +222,7 @@ class AudioRecorder {
               this.app.showFeedback('Audio note saved!', 'success');
               this.close();
           };
-          // Read the audio blob as a Data URL
+          // Read the audio blob as a Data URL, which is a text format
           reader.readAsDataURL(this.audioBlob);
       }
     }
@@ -384,7 +384,7 @@ export class FocusMatrixCloud {
         return;
     }
     try {
-        // Re-create the data URL from the pure Base64 string
+        // Re-create the full data URL from the pure Base64 string for playback
         const audioUrl = `data:audio/webm;base64,${task.audioNote}`;
         const audio = new Audio(audioUrl);
         audio.play();
@@ -630,7 +630,8 @@ export class FocusMatrixCloud {
         quadrant: dbTask.quadrant,
         goal: dbTask.goal || null,
         created_at: dbTask.created_at,
-        audioNote: dbTask.audio_note // Directly assign the Base64 string from Supabase
+        // Directly assign the Base64 string from Supabase. It's already in the correct format.
+        audioNote: dbTask.audio_note
       }));
     } else {
       this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]');
