@@ -399,8 +399,10 @@ export class FocusMatrixCloud {
     el.draggable = true;
     el.dataset.taskId = task.id;
     
-    // The goal badge remains, but the audio note logic is moved
+    // Goal badge logic remains the same.
     const goalBadge = task.goal ? `<span class="goal-badge" title="${this.escapeHtml(task.goal)}">🎯 ${this.escapeHtml(task.goal)}</span>` : '';
+    
+    // The old audioBadge logic is now completely removed.
 
     el.innerHTML = `
       <div class="task-text">${this.escapeHtml(task.text)} ${goalBadge}</div>
@@ -416,12 +418,10 @@ export class FocusMatrixCloud {
     el.addEventListener('dragend', e => e.currentTarget.classList.remove('dragging'));
     el.addEventListener('dblclick', () => this.editTask(task));
     
-    // Attach event listeners for the main action buttons
     el.querySelector('.focus-task-btn').addEventListener('click', (e) => { e.stopPropagation(); this.startFocusOnTask(task); });
     el.querySelector('.delete-btn').addEventListener('click', e => { e.stopPropagation(); this.deleteTask(task.id); });
     el.querySelector('.record-audio-btn').addEventListener('click', (e) => { e.stopPropagation(); this.audioRecorder.open(task); });
     
-    // Add event listener for the play button, if it exists
     const playBtn = el.querySelector('.play-audio-btn');
     if (playBtn) {
         playBtn.addEventListener('click', (e) => {
