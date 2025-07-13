@@ -4,33 +4,41 @@
 <dict>
 	<key>files</key>
 	<dict>
+		<key>Headers/Pods-App-umbrella.h</key>
+		<data>
+		wjh6Qt5SibF7Q4tKajcplxHOL6U=
+		</data>
 		<key>Info.plist</key>
 		<data>
-		xBxizqIJ5/WEbThwbc7ekKp0uDQ=
+		wEt9xP54+0LKYdAjbxa7HUdSdms=
 		</data>
-		<key>PrivacyInfo.xcprivacy</key>
+		<key>Modules/module.modulemap</key>
 		<data>
-		Eq4eiivdfFc9fjHGBSV6laZaNKI=
-		</data>
-		<key>native-bridge.js</key>
-		<data>
-		3FKbMDQudpyZCgUGlAldDDIROOs=
+		7qlNEEqeoP8+NvGxaU8GSYfvskY=
 		</data>
 	</dict>
 	<key>files2</key>
 	<dict>
-		<key>PrivacyInfo.xcprivacy</key>
+		<key>Headers/Pods-App-umbrella.h</key>
 		<dict>
+			<key>hash</key>
+			<data>
+			wjh6Qt5SibF7Q4tKajcplxHOL6U=
+			</data>
 			<key>hash2</key>
 			<data>
-			G6yCf0myuKU1hJG5aYIDvxkXkabxujo6zjsShdUtLRc=
+			H8X6UexosKZ4Vj/HBYHE//sj6T4nWl1D1XNNfaGLhNY=
 			</data>
 		</dict>
-		<key>native-bridge.js</key>
+		<key>Modules/module.modulemap</key>
 		<dict>
+			<key>hash</key>
+			<data>
+			7qlNEEqeoP8+NvGxaU8GSYfvskY=
+			</data>
 			<key>hash2</key>
 			<data>
-			BSEwDIYrAblsrTYnMzu8lWJu+t8VJYfZyEdtPOdXIsY=
+			tg//aDJOKimbLKrI5H+DNb5IZmttqQ/l2iL+/1Ztucw=
 			</data>
 		</dict>
 	</dict>

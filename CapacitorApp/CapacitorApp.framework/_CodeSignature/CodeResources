@@ -4,33 +4,88 @@
 <dict>
 	<key>files</key>
 	<dict>
+		<key>Headers/CapacitorApp-Swift.h</key>
+		<data>
+		Ptr5uTrwMD+xmOh6B3vor3JAjdU=
+		</data>
+		<key>Headers/CapacitorApp-umbrella.h</key>
+		<data>
+		S3oyzctLHd8HjabHPaE7X+z50/s=
+		</data>
 		<key>Info.plist</key>
 		<data>
-		xBxizqIJ5/WEbThwbc7ekKp0uDQ=
+		r6FixVK/V0g1vKXwxCMkONtK5sY=
 		</data>
-		<key>PrivacyInfo.xcprivacy</key>
+		<key>Modules/CapacitorApp.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo</key>
 		<data>
-		Eq4eiivdfFc9fjHGBSV6laZaNKI=
+		SPSzyU0cgXsJpJ8Ov/M3KAbg1sM=
 		</data>
-		<key>native-bridge.js</key>
+		<key>Modules/CapacitorApp.swiftmodule/arm64-apple-ios-simulator.abi.json</key>
 		<data>
-		3FKbMDQudpyZCgUGlAldDDIROOs=
+		gcwBsH4BgyFY4sVtNt+/xOKS3vY=
+		</data>
+		<key>Modules/CapacitorApp.swiftmodule/arm64-apple-ios-simulator.swiftdoc</key>
+		<data>
+		FndlH/v96t03TvYtF/p1ih3XYlc=
+		</data>
+		<key>Modules/CapacitorApp.swiftmodule/arm64-apple-ios-simulator.swiftmodule</key>
+		<data>
+		ApElhF/WpCKuWLH7wSFeFeh1/uc=
+		</data>
+		<key>Modules/module.modulemap</key>
+		<data>
+		IE9AiT+TWQ3tdi+l2z98PI5Ved0=
 		</data>
 	</dict>
 	<key>files2</key>
 	<dict>
-		<key>PrivacyInfo.xcprivacy</key>
+		<key>Headers/CapacitorApp-Swift.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			G6yCf0myuKU1hJG5aYIDvxkXkabxujo6zjsShdUtLRc=
+			kI07Y8wDlHJHN/Mz32SSPtktQ5s39uiwbELKgoG48hY=
 			</data>
 		</dict>
-		<key>native-bridge.js</key>
+		<key>Headers/CapacitorApp-umbrella.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			BSEwDIYrAblsrTYnMzu8lWJu+t8VJYfZyEdtPOdXIsY=
+			szw6tFEGLxghRBOxFnFNjXtzbqtBXGzbSsy5tlibhpc=
+			</data>
+		</dict>
+		<key>Modules/CapacitorApp.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			E6Ec4rZR4GDSnOIEWmJ4Zolw3N6B37XIvcf7BXo5/Yw=
+			</data>
+		</dict>
+		<key>Modules/CapacitorApp.swiftmodule/arm64-apple-ios-simulator.abi.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Qnesa0n4URGWAopawg9bGx36dUwkYV00BoCJ8LFzlyg=
+			</data>
+		</dict>
+		<key>Modules/CapacitorApp.swiftmodule/arm64-apple-ios-simulator.swiftdoc</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			WSNS5P/Cr9GLdMmFMJNfa1juURA4alxKKDJ6tzdJn7o=
+			</data>
+		</dict>
+		<key>Modules/CapacitorApp.swiftmodule/arm64-apple-ios-simulator.swiftmodule</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			ngfSK5Db0A8EZ1dNtivOmVRpZeXtkxXkkrDrfTHSKH4=
+			</data>
+		</dict>
+		<key>Modules/module.modulemap</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			rzZ6qx9WT5+v+sxP7tW9AbVZhHzLzqz25/UZAFOS2ks=
 			</data>
 		</dict>
 	</dict>
