@@ -399,13 +399,13 @@ export class FocusMatrixCloud {
     el.draggable = true;
     el.dataset.taskId = task.id;
     
+    // The goal badge remains, but the audio note logic is moved
     const goalBadge = task.goal ? `<span class="goal-badge" title="${this.escapeHtml(task.goal)}">🎯 ${this.escapeHtml(task.goal)}</span>` : '';
-    // The "Play" button is now part of the audio badge if a note exists
-    const audioBadge = task.audioNote ? `<span class="audio-note-indicator">🎵 <button class="task-action-btn play-audio-btn" aria-label="Play audio note">▶️</button></span>` : '';
 
     el.innerHTML = `
-      <div class="task-text">${this.escapeHtml(task.text)} ${goalBadge} ${audioBadge}</div>
+      <div class="task-text">${this.escapeHtml(task.text)} ${goalBadge}</div>
       <div class="task-actions">
+        ${task.audioNote ? `<button class="task-action-btn play-audio-btn" aria-label="Play audio note">▶️</button>` : ''}
         <button class="task-action-btn record-audio-btn" aria-label="Record audio note">🎤</button>
         <button class="task-action-btn focus-task-btn" aria-label="Focus on this task">🎯</button>
         <button class="task-action-btn delete-btn" aria-label="Delete">🗑️</button>
@@ -421,7 +421,7 @@ export class FocusMatrixCloud {
     el.querySelector('.delete-btn').addEventListener('click', e => { e.stopPropagation(); this.deleteTask(task.id); });
     el.querySelector('.record-audio-btn').addEventListener('click', (e) => { e.stopPropagation(); this.audioRecorder.open(task); });
     
-    // Add a new event listener specifically for the play button
+    // Add event listener for the play button, if it exists
     const playBtn = el.querySelector('.play-audio-btn');
     if (playBtn) {
         playBtn.addEventListener('click', (e) => {
