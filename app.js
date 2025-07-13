@@ -10,8 +10,8 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 /* ─────── Supabase keys (replace with env if bundling) ─────── */
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
+const SUPABASE_URL = "https://mzxeyosjcunoucmjgvln.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16eGV5b3NqY3Vub3VjbWpndmxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIzOTgyODIsImV4cCI6MjA2Nzk3NDI4Mn0.kXdS6Pvxt6Q62G5IOo_NZhc2jinTM7swfc7MfBxsJvE";
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ───────────────────────── Auth helper ─────────────────────── */
@@ -718,6 +718,52 @@ export class FocusMatrixCloud {
   }
 
   announceToScreenReader() {}
+
+  editTask(task) {
+    const el = document.querySelector(`[data-task-id="${task.id}"]`);
+    if (!el) return;
+    
+    const taskTextEl = el.querySelector('.task-text');
+    const currentText = task.text;
+    
+    // Create input element
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentText;
+    input.className = 'task-edit-input';
+    input.maxLength = 200;
+    
+    // Replace text with input
+    taskTextEl.innerHTML = '';
+    taskTextEl.appendChild(input);
+    input.focus();
+    input.select();
+    
+    const saveEdit = async () => {
+      const newText = this.sanitizeText(input.value.trim());
+      if (newText && newText !== currentText) {
+        task.text = newText;
+        await this.saveTasks();
+        this.showFeedback('Task updated!', 'success');
+      }
+      this.renderAllTasks();
+    };
+    
+    const cancelEdit = () => {
+      this.renderAllTasks();
+    };
+    
+    input.addEventListener('blur', saveEdit);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveEdit();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        cancelEdit();
+      }
+    });
+  }
 
   handleQuadrant4(task) {
     setTimeout(() => {
