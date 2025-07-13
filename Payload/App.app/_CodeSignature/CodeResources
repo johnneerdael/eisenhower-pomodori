@@ -6,7 +6,7 @@
 	<dict>
 		<key>App.debug.dylib</key>
 		<data>
-		jZ3Qcr5cPa8fXQgdJ4mAYf+4pHQ=
+		lCKqZ6JQ/pBSuweGhlSxkbIqQiY=
 		</data>
 		<key>AppIcon60x60@2x.png</key>
 		<data>
@@ -42,7 +42,7 @@
 		</data>
 		<key>Frameworks/Capacitor.framework/Capacitor</key>
 		<data>
-		eX288NXCtpPZj+sKGIQMl42plVo=
+		vAQAUgA7tD3wdX3X1FpTYiczZ1A=
 		</data>
 		<key>Frameworks/Capacitor.framework/Info.plist</key>
 		<data>
@@ -62,7 +62,7 @@
 		</data>
 		<key>Frameworks/CapacitorApp.framework/CapacitorApp</key>
 		<data>
-		uoeEqybN19f5ERnnS+/GjlpONjM=
+		QsK2V/DBO4k6zRRe0slu55j2g/Q=
 		</data>
 		<key>Frameworks/CapacitorApp.framework/Info.plist</key>
 		<data>
@@ -74,7 +74,7 @@
 		</data>
 		<key>Frameworks/Cordova.framework/Cordova</key>
 		<data>
-		GedrtRl7fl+M8ceDUUMzR4kMV5I=
+		jhM3WphlwfALVNI7z7sPjWSOI5c=
 		</data>
 		<key>Frameworks/Cordova.framework/Info.plist</key>
 		<data>
@@ -90,7 +90,7 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		e9wANDner2VV6stLv6LCtCuqg0A=
+		lnO6jYHrnEVvOfk1jWIP73bauSY=
 		</data>
 		<key>PkgInfo</key>
 		<data>
@@ -98,11 +98,11 @@
 		</data>
 		<key>__preview.dylib</key>
 		<data>
-		hWIPLbYBVLev4IZQEScI+eh7CZM=
+		JPqDLghNDWKIifyphrBTuK77+0M=
 		</data>
 		<key>capacitor.config.json</key>
 		<data>
-		7S2JGzbej0QH+SCz/Qsn4eOpXw8=
+		yRljX/EBb79i6k8LfU1fW8rhTQ4=
 		</data>
 		<key>config.xml</key>
 		<data>
@@ -147,7 +147,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			ORan+25r+9onef+LlQU2uMWKAuFh4jLhu9ebzzOJsk8=
+			8nuFNurbUsHBywUpbxsPMnwE1sf6oVde5hbnJQ8AYg4=
 			</data>
 		</dict>
 		<key>AppIcon60x60@2x.png</key>
@@ -210,7 +210,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			x8vKKMly5fDmGl7JUZ9+YqtLKJUgIxdhEVRsG0TWLyE=
+			VIIll304GK19mECr76Aixqoc8x8WrHIfcuxqunDkBcE=
 			</data>
 		</dict>
 		<key>Frameworks/Capacitor.framework/Info.plist</key>
@@ -245,7 +245,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Vl+0euCw96KD8FIK9s0R+n+TXoGD/Tak8XK3wPCMcpw=
+			HJTPCnsn5h6UInzYsFGDveT/4Yazuz/3taWSNrsCJ24=
 			</data>
 		</dict>
 		<key>Frameworks/CapacitorApp.framework/Info.plist</key>
@@ -266,7 +266,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			nbfiPFHNtLusdhNOUG2GsgnmL3drlzZAhes8uUZQpyU=
+			MTG3034T+/Ze+rWnURzWko9lcYoejvfmWkK6XNoSBYo=
 			</data>
 		</dict>
 		<key>Frameworks/Cordova.framework/Info.plist</key>
@@ -294,14 +294,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			xnch4AV9pyvOjOGEbcZQJb74F92aF5hLd4laLRs3pfM=
+			8qZ2SgBB2rzKlwy+D3WoJDNQw1UxoCIozRHunLLTaow=
 			</data>
 		</dict>
 		<key>capacitor.config.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			dhqG7UavBBlLYKMd2j6C1v3uuS5LFpgRl7wJFJanN2A=
+			n0gcfxa1mo9ml2+58f32bVT+LuzR18zZd59XcvA0uGI=
 			</data>
 		</dict>
 		<key>config.xml</key>

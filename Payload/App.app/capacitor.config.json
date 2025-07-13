@@ -2,10 +2,6 @@
 	"appId": "com.piehouse.focusmatrix",
 	"appName": "FocusMatrix",
 	"webDir": "dist",
-	"server": {
-		"url": "https://pomodoro.thepi.es",
-		"cleartext": false
-	},
 	"packageClassList": [
 		"AppPlugin"
 	]
