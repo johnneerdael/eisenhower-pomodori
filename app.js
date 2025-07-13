@@ -208,19 +208,21 @@ class AudioRecorder {
     }
 
     async saveRecording() {
-        if (this.audioBlob) {
-            const reader = new FileReader();
-            reader.onloadend = async () => {
-                const base64data = reader.result;
-                this.currentTask.audioNote = base64data;
-                await this.app.saveTasks();
-                this.app.renderAllTasks();
-                this.app.showFeedback('Audio note saved!', 'success');
-                this.close();
-            };
-            reader.readAsDataURL(this.audioBlob);
-        }
-    }
+      if (this.audioBlob) {
+          const reader = new FileReader();
+          reader.onloadend = async () => {
+              // The result is now an ArrayBuffer (raw bytes), not a string
+              const arrayBuffer = reader.result; 
+              this.currentTask.audioNote = arrayBuffer;
+              await this.app.saveTasks();
+              this.app.renderAllTasks();
+              this.app.showFeedback('Audio note saved!', 'success');
+              this.close();
+          };
+          // Read the audio blob as an ArrayBuffer
+          reader.readAsArrayBuffer(this.audioBlob);
+      }
+  }
 
     startTimer() {
         let seconds = 0;
@@ -323,6 +325,23 @@ export class FocusMatrixCloud {
       else { window.location.reload(); }
     };
 
+    playAudioNote(task) {
+      if (!task.audioNote) {
+          this.showFeedback("No audio note found for this task.", "error");
+          return;
+      }
+      try {
+          // Create a new Blob from the stored ArrayBuffer
+          const blob = new Blob([task.audioNote], { type: 'audio/webm' });
+          const audioUrl = URL.createObjectURL(blob);
+          const audio = new Audio(audioUrl);
+          audio.play();
+      } catch (error) {
+          console.error("Error playing audio note:", error);
+          this.showFeedback("Could not play audio note.", "error");
+      }
+    }
+
     /* Timer */
     this.timerRunning = false;
     this.focusTimer = null;
@@ -379,8 +398,11 @@ export class FocusMatrixCloud {
     el.className = 'task-item';
     el.draggable = true;
     el.dataset.taskId = task.id;
+    
     const goalBadge = task.goal ? `<span class="goal-badge" title="${this.escapeHtml(task.goal)}">🎯 ${this.escapeHtml(task.goal)}</span>` : '';
-    const audioBadge = task.audioNote ? `<span class="audio-note-indicator">🎵</span>` : '';
+    // The "Play" button is now part of the audio badge if a note exists
+    const audioBadge = task.audioNote ? `<span class="audio-note-indicator">🎵 <button class="task-action-btn play-audio-btn" aria-label="Play audio note">▶️</button></span>` : '';
+
     el.innerHTML = `
       <div class="task-text">${this.escapeHtml(task.text)} ${goalBadge} ${audioBadge}</div>
       <div class="task-actions">
@@ -394,9 +416,19 @@ export class FocusMatrixCloud {
     el.addEventListener('dragend', e => e.currentTarget.classList.remove('dragging'));
     el.addEventListener('dblclick', () => this.editTask(task));
     
+    // Attach event listeners for the main action buttons
     el.querySelector('.focus-task-btn').addEventListener('click', (e) => { e.stopPropagation(); this.startFocusOnTask(task); });
     el.querySelector('.delete-btn').addEventListener('click', e => { e.stopPropagation(); this.deleteTask(task.id); });
     el.querySelector('.record-audio-btn').addEventListener('click', (e) => { e.stopPropagation(); this.audioRecorder.open(task); });
+    
+    // Add a new event listener specifically for the play button
+    const playBtn = el.querySelector('.play-audio-btn');
+    if (playBtn) {
+        playBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.playAudioNote(task);
+        });
+    }
 
     el.addEventListener('touchstart', e => this.handleTouchStart(e));
     el.addEventListener('touchmove', e => this.handleTouchMove(e, el));
@@ -596,7 +628,7 @@ export class FocusMatrixCloud {
                 goal: t.goal,
                 created_at: t.created_at,
                 updated_at: new Date().toISOString(),
-                // audio_note: t.audioNote // REMOVED: This column does not exist in your database schema
+                audio_note: t.audioNote // RE-ENABLED: This will now save to your new database column
             }));
             const { data: insertedTasks, error: insertError } = await supabase.from('tasks').insert(insertData).select();
             if (!insertError && insertedTasks) {
@@ -615,7 +647,7 @@ export class FocusMatrixCloud {
                 quadrant: t.quadrant,
                 goal: t.goal,
                 updated_at: new Date().toISOString(),
-                // audio_note: t.audioNote // REMOVED: This column does not exist in your database schema
+                audio_note: t.audioNote // RE-ENABLED: This will now update your new database column
             }));
             await supabase.from('tasks').upsert(updates);
         }
