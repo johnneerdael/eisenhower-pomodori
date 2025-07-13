@@ -10,6 +10,7 @@
 /* styles.css */
 
 .app-header {
+  padding-top: calc(var(--safe-top) + var(--spacing-sm));
   position: relative; /* Add this */
   z-index: 40; /* Add this */
   display: flex;
@@ -20,11 +21,19 @@
   border-bottom: 2px solid var(--border-color);
 }
 
-/* Optional: keep toast / feedback messages out of the island too */
-.feedback-message {
-  top: calc(1rem + var(--safe-top));
-  right: calc(1rem + var(--safe-right));
+/* Put toast at the bottom-centre (recommended) */
+.feedback-message{
+  top: auto !important;    /* cancel earlier rule */
+  right: auto !important;  /* cancel earlier rule */
+  bottom: var(--spacing-lg);
+  left: 50%;
+  transform: translateX(-50%);  
+  z-index:9999;            /* always on top but predictable */
+  width:max-content;       /* never stretches wider than the text */
+  max-width:90vw;          /* stays inside small screens */
+  height:auto;             /* prevents vertical stretching even if both top & bottom slip back in */
 }
+
 
 
 /* CSS Custom Properties for ADHD-friendly theming */
@@ -133,15 +142,14 @@ body {
 
 /* ── Burger button ───────────────────────────── */
 .burger-btn{
+  padding-top: calc(var(--safe-top) + var(--spacing-sm));
   background: var(--secondary-bg);
   border: 2px solid var(--border-color);
   border-radius: var(--border-radius);
   font-size: 1.6rem;
-  padding: 0.25rem 0.8rem;
   line-height: 1;
   /* keep it above the sheet when open */
   position:fixed;
-  top:calc(var(--safe-top) + 1rem);
   right:1rem;
   z-index:50;
 }

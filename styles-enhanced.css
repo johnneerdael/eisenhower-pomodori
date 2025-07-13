@@ -303,19 +303,6 @@ input[type="range"].slider:hover::-webkit-slider-thumb { background: var(--accen
   gap: var(--spacing-sm);
 }
 
-/***** 4. Feedback Toast Re‑skin *****/
-.feedback-message {
-  position: fixed;
-  bottom: var(--spacing-lg);
-  left: 50%;
-  transform: translateX(-50%);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: 9999px;
-  font-weight: 600;
-  color: #fff;
-  animation: toastIn 0.3s ease forwards, toastOut 0.3s ease 2.7s forwards;
-  pointer-events: none;
-}
 .feedback-message.success { background: var(--accent-start); }
 .feedback-message.error   { background: var(--danger-start); }
 .feedback-message.info    { background: var(--text-secondary); color:#fff; }

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+n<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -10,8 +10,8 @@
   <meta name="theme-color" content="#3b82f6" />
   <meta name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <script type="module" crossorigin src="/assets/index-C7goN5M3.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-CiwxyOKM.css">
+  <script type="module" crossorigin src="/assets/index-Cuir7woR.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BI-L8y4m.css">
 </head>
 <body>
   <main class="app-container">
@@ -33,15 +33,19 @@
       <button id="progressToggle" class="mobile-item" role="menuitem">📊 Progress</button>
       <button id="exportBtn"      class="mobile-item" role="menuitem">💾 Export</button>
       <button id="settingsBtn"    class="mobile-item" role="menuitem">⚙️ Settings</button>
+
+      <button id="logoutBtn" class="mobile-item" role="menuitem" style="display: none;">🚪 Logout</button>
     </nav>
     </header>
 
     <!-- ─────────────────────── Focus‑Timer Overlay ─────────────────────── -->
-    <div id="focusTimer" style="display:none">
+    <div id="focusTimer">
       <div class="focus-timer">
         <header class="timer-header">
           <div class="timer-session-info">
             <h3 id="timerSessionTitle">Time to Focus!</h3>
+            <!-- ▼ NEW: Display current task ▼ -->
+            <p id="timerTaskText" class="timer-task-text">Your most important task</p>
             <span id="timerSessionCount" class="timer-session-count">Session 1 of 4</span>
           </div>
         </header>
@@ -111,15 +115,69 @@
     </section>
 
     <!-- ─────────────────────── Eisenhower Matrix ─────────────────────── -->
-    <section class="matrix-container">
+    <section id="matrixContainer" class="matrix-container">
       <div class="matrix-grid">
-        <div class="quadrant q1" data-quadrant="1"><h2>Do First</h2><p>Urgent + Important</p><div id="q1-tasks" class="task-list"></div></div>
-        <div class="quadrant q2" data-quadrant="2"><h2>Schedule</h2><p>Important + Not Urgent</p><div id="q2-tasks" class="task-list"></div></div>
-        <div class="quadrant q3" data-quadrant="3"><h2>Delegate</h2><p>Urgent + Not Important</p><div id="q3-tasks" class="task-list"></div></div>
-        <div class="quadrant q4" data-quadrant="4"><h2>Eliminate</h2><p>Neither Urgent nor Important</p><div id="q4-tasks" class="task-list"></div></div>
+        <div class="quadrant q1" data-quadrant="1">
+          <div class="quadrant-header">
+            <div class="quadrant-title"><h2>Do First</h2><p>Urgent + Important</p></div>
+            <button class="focus-quadrant-btn" data-quadrant="1" aria-label="Focus on Do First tasks">🎯</button>
+          </div>
+          <div id="q1-tasks" class="task-list"></div>
+        </div>
+        <div class="quadrant q2" data-quadrant="2">
+          <div class="quadrant-header">
+            <div class="quadrant-title"><h2>Schedule</h2><p>Important + Not Urgent</p></div>
+            <button class="focus-quadrant-btn" data-quadrant="2" aria-label="Focus on Schedule tasks">🎯</button>
+          </div>
+          <div id="q2-tasks" class="task-list"></div>
+        </div>
+        <div class="quadrant q3" data-quadrant="3">
+          <div class="quadrant-header">
+            <div class="quadrant-title"><h2>Delegate</h2><p>Urgent + Not Important</p></div>
+            <button class="focus-quadrant-btn" data-quadrant="3" aria-label="Focus on Delegate tasks">🎯</button>
+          </div>
+          <div id="q3-tasks" class="task-list"></div>
+        </div>
+        <div class="quadrant q4" data-quadrant="4">
+          <div class="quadrant-header">
+            <div class="quadrant-title"><h2>Eliminate</h2><p>Neither Urgent nor Important</p></div>
+            <button class="focus-quadrant-btn" data-quadrant="4" aria-label="Focus on Eliminate tasks">🎯</button>
+          </div>
+          <div id="q4-tasks" class="task-list"></div>
+        </div>
       </div>
     </section>
   </main>
+
+  <!-- ─────────────────────── Authentication Overlay ─────────────────────── -->
+  <div id="authContainer" class="auth-container" style="display: none;">
+    <div class="auth-box">
+      <h2 id="authTitle">Welcome Back</h2>
+      <p id="authSubtitle" class="auth-subtitle">Login to sync your FocusMatrix.</p>
+      
+      <form id="authForm">
+        <div class="form-group">
+          <label for="authEmail">Email</label>
+          <input type="email" id="authEmail" class="setting-control" placeholder="you@example.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="authPassword">Password</label>
+          <input type="password" id="authPassword" class="setting-control" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+
+        <div id="authFeedback" class="auth-feedback" style="display: none;"></div>
+
+        <div class="auth-actions">
+          <button type="submit" id="loginBtn" class="btn btn-primary">Log In</button>
+          <button type="button" id="signupBtn" class="btn btn-secondary">Sign Up</button>
+        </div>
+      </form>
+
+      <div class="auth-helpers">
+        <a href="#" id="resetPasswordLink">Forgot Password?</a>
+      </div>
+    </div>
+  </div>
 
   <!-- ─────────────────────── Settings Modal ─────────────────────── -->
   <div id="settingsModal" class="settings-modal" role="dialog" aria-labelledby="settingsTitle" aria-hidden="true">
@@ -135,6 +193,27 @@
           <h3>Visual Preferences</h3>
           <div class="setting-group"><label for="themeSelect" class="setting-label">Color Theme</label><select id="themeSelect" class="setting-control"><option value="auto">Auto (System)</option><option value="light">Light</option><option value="dark">Dark</option><option value="high-contrast">High Contrast</option></select></div>
           <div class="setting-group"><label for="fontSizeSlider" class="setting-label">Font Size</label><div class="slider-container"><input id="fontSizeSlider" class="setting-control slider" type="range" min="12" max="24" value="16" step="1" /><span id="fontSizeValue" class="slider-value">16px</span></div></div>
+        </section>
+        <!-- Audio Settings Section -->
+        <section class="settings-section">
+          <h3>Auditory Feedback</h3>
+          <p class="sub-text">Enable a soundscape to play during focus sessions.</p>
+          <div class="setting-group checkbox-group">
+            <input id="soundEnabled" class="setting-checkbox" type="checkbox" />
+            <label for="soundEnabled" class="checkbox-label">Enable Timer Sounds</label>
+          </div>
+          <div class="setting-group">
+            <label for="soundscapeSelect" class="setting-label">Focus Soundscape</label>
+            <select id="soundscapeSelect" class="setting-control">
+              <option value="none">None</option>
+              <option value="ticking">Ticking Clock</option>
+              <option value="synth-pad">Synth Pad</option>
+              <option value="kalimba">Kalimba</option>
+              <option value="white-noise">White Noise</option>
+              <option value="pink-noise">Pink Noise</option>
+              <option value="brown-noise">Brown Noise</option>
+            </select>
+          </div>
         </section>
         <!-- Goals -->
         <section class="settings-section">
@@ -163,6 +242,38 @@
         </section>
       </div>
       <footer class="settings-footer"><button id="resetSettings" class="btn btn-secondary">Reset to Defaults</button><div class="footer-actions"><button id="cancelSettings" class="btn btn-secondary">Cancel</button><button id="saveSettings" class="btn btn-primary">Save Changes</button></div></footer>
+    </div>
+  </div>
+  
+  <!-- ▼ NEW: Post-Pomodoro Triage Modal ▼ -->
+  <div id="triageModal" class="triage-modal" style="display: none;">
+    <div class="triage-box">
+        <h4>Session Complete!</h4>
+        <p>Did you finish this task?</p>
+        <p id="triageTaskText" class="triage-task-text"></p>
+        <div class="triage-actions">
+            <button id="triageCompleteBtn" class="btn btn-primary">✅ Yes, it's done!</button>
+            <button id="triageIncompleteBtn" class="btn btn-secondary">❌ Not yet</button>
+        </div>
+    </div>
+  </div>
+
+  <!-- Audio Recording Modal -->
+  <div id="audioRecordModal" class="audio-record-modal" style="display: none;">
+    <div class="audio-record-box">
+      <h4>Record Audio Note</h4>
+      <p id="audioRecordTaskText"></p>
+      <div id="audioVisualizer" class="audio-visualizer"></div>
+      <div class="audio-record-timer">00:00</div>
+      <div class="audio-record-controls">
+        <button id="audioRecordBtn" class="btn btn-danger">🔴 Record</button>
+        <button id="audioStopBtn" class="btn btn-secondary" style="display: none;">⏹️ Stop</button>
+        <button id="audioPlayBtn" class="btn btn-secondary" disabled>▶️ Play</button>
+      </div>
+      <div class="audio-record-footer">
+        <button id="audioCancelBtn" class="btn btn-secondary">Cancel</button>
+        <button id="audioSaveBtn" class="btn btn-primary" disabled>Save Note</button>
+      </div>
     </div>
   </div>
 
