@@ -1115,3 +1115,9 @@ body.focus-mode #focusTimer { display: flex; }
 	gap: var(--spacing-sm);
 	justify-content: center;
   }
+
+  .task-action-btn {
+	touch-action: manipulation;
+	-webkit-user-drag: none; /* prevent accidental drag highlights */
+  }
+  

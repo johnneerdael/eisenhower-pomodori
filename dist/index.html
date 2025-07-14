@@ -1,4 +1,4 @@
-n<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -10,8 +10,8 @@ n<!DOCTYPE html>
   <meta name="theme-color" content="#3b82f6" />
   <meta name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <script type="module" crossorigin src="/assets/index-Cuir7woR.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-BI-L8y4m.css">
+  <script type="module" crossorigin src="/assets/index-cbFQZURM.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BvCrxHQJ.css">
 </head>
 <body>
   <main class="app-container">
@@ -44,7 +44,6 @@ n<!DOCTYPE html>
         <header class="timer-header">
           <div class="timer-session-info">
             <h3 id="timerSessionTitle">Time to Focus!</h3>
-            <!-- ▼ NEW: Display current task ▼ -->
             <p id="timerTaskText" class="timer-task-text">Your most important task</p>
             <span id="timerSessionCount" class="timer-session-count">Session 1 of 4</span>
           </div>
@@ -180,7 +179,7 @@ n<!DOCTYPE html>
   </div>
 
   <!-- ─────────────────────── Settings Modal ─────────────────────── -->
-  <div id="settingsModal" class="settings-modal" role="dialog" aria-labelledby="settingsTitle" aria-hidden="true">
+  <div id="settingsModal" class="settings-modal" role="dialog" aria-labelledby="settingsTitle" aria-hidden="true" tabindex="-1">
     <div id="settingsOverlay" class="settings-overlay"></div>
     <div class="settings-content">
       <header class="settings-header">
@@ -194,6 +193,7 @@ n<!DOCTYPE html>
           <div class="setting-group"><label for="themeSelect" class="setting-label">Color Theme</label><select id="themeSelect" class="setting-control"><option value="auto">Auto (System)</option><option value="light">Light</option><option value="dark">Dark</option><option value="high-contrast">High Contrast</option></select></div>
           <div class="setting-group"><label for="fontSizeSlider" class="setting-label">Font Size</label><div class="slider-container"><input id="fontSizeSlider" class="setting-control slider" type="range" min="12" max="24" value="16" step="1" /><span id="fontSizeValue" class="slider-value">16px</span></div></div>
         </section>
+        
         <!-- Audio Settings Section -->
         <section class="settings-section">
           <h3>Auditory Feedback</h3>
@@ -215,6 +215,7 @@ n<!DOCTYPE html>
             </select>
           </div>
         </section>
+        
         <!-- Goals -->
         <section class="settings-section">
           <h3>Your Life / Work Goals</h3>
@@ -231,7 +232,6 @@ n<!DOCTYPE html>
           <div class="setting-group"><label for="shortBreakDuration" class="setting-label">Short Break</label><select id="shortBreakDuration" class="setting-control"><option value="5" selected>5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option></select></div>
           <div class="setting-group"><label for="longBreakDuration" class="setting-label">Long Break</label><select id="longBreakDuration" class="setting-control"><option value="15">15 minutes</option><option value="20">20 minutes</option><option value="30" selected>30 minutes</option></select></div>
           <div class="setting-group"><label for="sessionsPerCycle" class="setting-label">Sessions per Cycle</label><select id="sessionsPerCycle" class="setting-control"><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option></select></div>
-          <div class="setting-group checkbox-group"><input id="soundEnabled" class="setting-checkbox" type="checkbox" /><label for="soundEnabled" class="checkbox-label">Enable Sound Effects</label></div>
           <div class="setting-group checkbox-group"><input id="achievementsEnabled" class="setting-checkbox" type="checkbox" checked /><label for="achievementsEnabled" class="checkbox-label">Show Achievement Notifications</label></div>
         </section>
         <!-- Data Mgmt -->
@@ -245,7 +245,7 @@ n<!DOCTYPE html>
     </div>
   </div>
   
-  <!-- ▼ NEW: Post-Pomodoro Triage Modal ▼ -->
+  <!-- Post-Pomodoro Triage Modal -->
   <div id="triageModal" class="triage-modal" style="display: none;">
     <div class="triage-box">
         <h4>Session Complete!</h4>

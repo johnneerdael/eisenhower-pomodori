@@ -1,8 +1,0 @@
-{
-	"appId": "com.piehouse.focusmatrix",
-	"appName": "FocusMatrix",
-	"webDir": "dist",
-	"packageClassList": [
-		"AppPlugin"
-	]
-}

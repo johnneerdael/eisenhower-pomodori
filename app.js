@@ -398,7 +398,7 @@ export class FocusMatrixCloud {
   renderTask(task) {
     const el = document.createElement('div');
     el.className = 'task-item';
-    el.draggable = true;
+    el.draggable = !('ontouchstart' in window);
     el.dataset.taskId = task.id;
     
     // Goal badge logic remains the same.
@@ -432,9 +432,18 @@ export class FocusMatrixCloud {
         });
     }
 
-    el.addEventListener('touchstart', e => this.handleTouchStart(e));
-    el.addEventListener('touchmove', e => this.handleTouchMove(e, el));
-    el.addEventListener('touchend', e => this.handleTouchEnd(e, task, el));
+    el.addEventListener('touchstart', e => {
+      if (e.target.closest('.task-action-btn')) return;
+      this.handleTouchStart(e);
+    });
+    el.addEventListener('touchmove', (e) => {
+      if (e.target.closest('.task-action-btn')) return;
+      this.handleTouchMove(e, el);
+    });
+    el.addEventListener('touchend', e => {
+      if (e.target.closest('.task-action-btn')) return;
+      this.handleTouchEnd(e, task, el);
+    });
 
     document.getElementById(`q${task.quadrant}-tasks`).appendChild(el);
     this.updateEmptyStates();
@@ -623,16 +632,39 @@ export class FocusMatrixCloud {
         this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]');
         return;
       }
-      this.tasks = (data || []).map(dbTask => ({
-        id: `task_${dbTask.id}`,
-        database_id: dbTask.id,
-        text: dbTask.text,
-        quadrant: dbTask.quadrant,
-        goal: dbTask.goal || null,
-        created_at: dbTask.created_at,
-        // Directly assign the Base64 string from Supabase. It's already in the correct format.
-        audioNote: dbTask.audio_note
-      }));
+      this.tasks = (data || []).map(dbTask => {
+        let finalAudioNote = null;
+        if (dbTask.audio_note && typeof dbTask.audio_note === 'string') {
+          // Check if the string is in PostgreSQL's hex format (starts with \x)
+          if (dbTask.audio_note.startsWith('\\x')) {
+            try {
+              // It's a hex string from the DB, so we must convert it to Base64
+              const hex = dbTask.audio_note.substring(2);
+              let binaryString = '';
+              for (let i = 0; i < hex.length; i += 2) {
+                binaryString += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+              }
+              finalAudioNote = btoa(binaryString);
+            } catch (e) {
+              console.error("Could not parse hex audio note:", e);
+              finalAudioNote = null;
+            }
+          } else {
+            // Otherwise, assume it's already a valid Base64 string
+            finalAudioNote = dbTask.audio_note;
+          }
+        }
+
+        return {
+          id: `task_${dbTask.id}`,
+          database_id: dbTask.id,
+          text: dbTask.text,
+          quadrant: dbTask.quadrant,
+          goal: dbTask.goal || null,
+          created_at: dbTask.created_at,
+          audioNote: finalAudioNote // Assign the clean, Base64 version
+        };
+      });
     } else {
       this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]');
     }
@@ -689,7 +721,30 @@ export class FocusMatrixCloud {
   async handleDrop(e) { e.preventDefault(); const list = e.target.closest('.task-list'); if (!list || !this.draggedTask) return; const quad = parseInt(list.closest('.quadrant').dataset.quadrant); if (this.draggedTask.quadrant === quad) return; this.draggedTask.quadrant = quad; await this.saveTasks(); this.renderAllTasks(); if (quad === 4) this.handleQuadrant4(this.draggedTask); }
   handleTouchStart(e) { this.touchStartX = e.touches[0].clientX; this.touchStartY = e.touches[0].clientY; this.touchStartTime = Date.now(); }
   handleTouchMove(e, el) { const dx = e.touches[0].clientX - this.touchStartX; if (Math.abs(dx) < 10) return; el.style.transform = `translateX(${dx}px)`; if (dx < -this.swipeThreshold) el.classList.add('swipe-left'); else el.classList.remove('swipe-left'); }
-  handleTouchEnd(e, task, el) { const dx = e.changedTouches[0].clientX - this.touchStartX; const dy = e.changedTouches[0].clientY - this.touchStartY; const elapsed = Date.now() - this.touchStartTime; el.style.transform = ''; el.classList.remove('swipe-left'); if (elapsed < this.tapThreshold && Math.abs(dx) < 10 && Math.abs(dy) < 10) { this.editTask(task); return; } if (dx < -this.swipeThreshold) this.deleteTask(task.id, true); }
+  handleTouchEnd(e, task, el) {
+    // Check if the tap was on one of the action buttons.
+    // If so, do nothing and let the button's own event listener handle it.
+    if (e.target.closest('.task-action-btn')) {
+      return;
+    }
+
+    const dx = e.changedTouches[0].clientX - this.touchStartX;
+    const dy = e.changedTouches[0].clientY - this.touchStartY;
+    const elapsed = Date.now() - this.touchStartTime;
+    
+    el.style.transform = '';
+    el.classList.remove('swipe-left');
+
+    // If it wasn't a button, proceed with the original tap/swipe logic.
+    if (elapsed < this.tapThreshold && Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+      this.editTask(task);
+      return;
+    }
+    
+    if (dx < -this.swipeThreshold) {
+      this.deleteTask(task.id, true);
+    }
+  }
   updateEmptyStates() { document.querySelectorAll('.quadrant').forEach(q => { const list = q.querySelector('.task-list'); let es = q.querySelector('.empty-state'); if (!list.children.length) { if (!es) { es = document.createElement('div'); es.className = 'empty-state'; es.textContent = 'Drag tasks here'; list.appendChild(es); } } else { es?.remove(); } }); }
   renderAllTasks() { document.querySelectorAll('.task-list').forEach(l => l.innerHTML = ''); this.tasks.forEach(t => this.renderTask(t)); this.updateEmptyStates(); }
   bindTimerEvents() { document.getElementById('startTimer').addEventListener('click', () => this.startTimer()); document.getElementById('pauseTimer').addEventListener('click', () => this.pauseTimer()); document.getElementById('resetTimer').addEventListener('click', () => this.resetTimer()); document.getElementById('exitFocus').addEventListener('click', () => this.toggleFocusMode()); document.getElementById('phaseFocus').addEventListener('click', () => this.setTimerMode('focus')); document.getElementById('phaseShortBreak').addEventListener('click', () => this.setTimerMode('shortBreak')); document.getElementById('phaseLongBreak').addEventListener('click', () => this.setTimerMode('longBreak')); }
