@@ -210,35 +210,35 @@ class AudioRecorder {
     }
 
     async saveRecording() {
-      // 1) Build a data URL so we get the right mime
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const dataUrl = reader.result; // e.g. "data:audio/mp4;base64,AAAA..."
-        // 2) Fetch it back into a Blob so we can grab its ArrayBuffer
-        const blob = await (await fetch(dataUrl)).blob();
-        const arrayBuffer = await blob.arrayBuffer();
-        const uint8 = new Uint8Array(arrayBuffer);
+      // 1) Read blob into an ArrayBuffer
+      const arrayBuffer = await this.audioBlob.arrayBuffer();
+      const uint8 = new Uint8Array(arrayBuffer);
     
-        // 3) Then update your bytea column with that TypedArray
-        const { error } = await supabase
-          .from('tasks')
-          .update({
-            audio_note: uint8,            // JS binary → Postgres bytea
-            audio_mime: blob.type         // keep the mime too
-          })
-          .eq('id', this.currentTask.database_id)
+      // 2) Build a Postgres hex string: "\x010203…"
+      const hex = Array.from(uint8)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      const pgHex = `\\x${hex}`;
     
-        if (error) {
-          console.error("Failed to save audio_note:", error);
-          this.app.showFeedback("Could not save audio note.", "error");
-        } else {
-          this.app.showFeedback("Audio note saved!", "success");
-          this.app.renderAllTasks();
-          this.close();
-        }
-      };
-      reader.readAsDataURL(this.audioBlob);
+      // 3) Update your bytea column with the hex string
+      const { error } = await supabase
+        .from('tasks')
+        .update({
+          audio_note: pgHex,
+          audio_mime: this.audioBlob.type
+        })
+        .eq('id', this.currentTask.database_id);
+    
+      if (error) {
+        console.error("Failed to save audio_note:", error);
+        this.app.showFeedback("Could not save audio note.", "error");
+      } else {
+        this.app.showFeedback("Audio note saved!", "success");
+        this.app.renderAllTasks();
+        this.close();
+      }
     }
+    
     
     
     
