@@ -226,7 +226,7 @@ class AudioRecorder {
             audio_note: uint8,            // JS binary → Postgres bytea
             audio_mime: blob.type         // keep the mime too
           })
-          .eq('id', this.currentTask.id);
+          .eq('id', this.currentTask.database_id)
     
         if (error) {
           console.error("Failed to save audio_note:", error);
