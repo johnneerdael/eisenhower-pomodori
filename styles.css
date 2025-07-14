@@ -423,8 +423,8 @@ body.focus-mode #focusTimer { display: flex; }
 	box-shadow: var(--shadow-sm);
 	position: relative;
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
+	gap: var(--spacing-sm); /* Add gap between text and actions */
 }
 
 .task-item:hover {
@@ -1037,6 +1037,17 @@ body.focus-mode #focusTimer { display: flex; }
    TASK ITEM ENHANCEMENTS
    ================================================================== */
 
+.task-text {
+  flex-grow: 1; /* Allow the text container to grow and fill available space */
+  min-width: 0; /* A flexbox trick to allow text to wrap properly in shrinking containers */
+}
+
+.task-actions {
+  flex-shrink: 0; /* Prevent the actions container from shrinking or wrapping */
+  display: flex;
+  align-items: center;
+}
+
 /* 1. FIX: Double the size and style the task action icons */
 .task-action-btn {
 	background: transparent;
@@ -1120,4 +1131,3 @@ body.focus-mode #focusTimer { display: flex; }
 	touch-action: manipulation;
 	-webkit-user-drag: none; /* prevent accidental drag highlights */
   }
-  
