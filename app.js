@@ -395,18 +395,16 @@ export class FocusMatrixCloud {
   }
 
   playAudioNote(task) {
-    if (!task.audio_note) return this.showFeedback("No audio note.", "error");
-    const mime = task.audio_mime || 'audio/webm';
-    // Postgres bytea → Uint8Array → base64 string
-    const b64 = btoa(
-      String.fromCharCode(...new Uint8Array(task.audio_note))
-    );
-    const url = `data:${mime};base64,${b64}`;
+    if (!task.audioNote) return this.showFeedback("No audio note.", "error");
+    const mime = task.audio_mime || 'audio/webm';     // or task.audioMime if you rename
+    const b64  = task.audioNote;
+    const url  = `data:${mime};base64,${b64}`;
     new Audio(url).play().catch(err => {
       console.error(err);
       this.showFeedback("Playback failed.", "error");
     });
   }
+  
   
 
   /* ====================== TASK RENDERING ====================== */
@@ -679,7 +677,9 @@ export class FocusMatrixCloud {
         quadrant: dbTask.quadrant,
         goal: dbTask.goal || null,
         created_at: dbTask.created_at,
-        audioNote: finalAudioNote // Assign the clean, Base64 version
+        audioNote: finalAudioNote,
+        audio_note: finalAudioNote,       // <-- for playAudioNote()
+        audio_mime: dbTask.audio_mime     // <-- for playAudioNote()
       };
     });
   } else {
