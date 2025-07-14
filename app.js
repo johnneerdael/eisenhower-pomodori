@@ -166,29 +166,31 @@ class AudioRecorder {
     }
 
     async startRecording() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            this.mediaRecorder = new MediaRecorder(stream);
-            this.mediaRecorder.ondataavailable = event => {
-                this.audioChunks.push(event.data);
-            };
-            this.mediaRecorder.onstop = () => {
-                this.audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
-                this.playBtn.disabled = false;
-                this.saveBtn.disabled = false;
-            };
-            
-            this.audioChunks = [];
-            this.mediaRecorder.start();
-            this.startTimer();
-
-            this.recordBtn.style.display = 'none';
-            this.stopBtn.style.display = 'inline-flex';
-        } catch (err) {
-            console.error("Error starting recording:", err);
-            this.app.showFeedback("Could not start recording. Check microphone permissions.", "error");
-        }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    
+      // 1. Pick a Safari-friendly MIME (AAC in MP4)
+      let options = { mimeType: 'audio/mp4; codecs="mp4a.40.2"' };
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        console.warn(`${options.mimeType} not supported; falling back to default.`);
+        options = {};  // lets the UA pick its default (usually audio/webm on Chrome/Android)
+      }
+    
+      this.mediaRecorder = new MediaRecorder(stream, options);
+      this.mediaRecorder.ondataavailable = e => this.audioChunks.push(e.data);
+      this.mediaRecorder.onstop = () => {
+        // preserve the actual container type
+        this.audioBlob = new Blob(this.audioChunks, { type: this.mediaRecorder.mimeType });
+        this.playBtn.disabled = false;
+        this.saveBtn.disabled = false;
+      };
+    
+      this.audioChunks = [];
+      this.mediaRecorder.start();
+      this.recordBtn.style.display = 'none';
+      this.stopBtn.style.display = 'inline-flex';
+      this.startTimer();
     }
+    
 
     stopRecording() {
         if (this.mediaRecorder) {
@@ -208,24 +210,38 @@ class AudioRecorder {
     }
 
     async saveRecording() {
-      if (this.audioBlob) {
-          const reader = new FileReader();
-          reader.onloadend = async () => {
-              // Get the result as a data URL (e.g., "data:audio/webm;base64,ABC...")
-              const dataUrl = reader.result;
-              // Strip the prefix to store only the pure Base64 string
-              const base64String = dataUrl.split(',')[1];
-
-              this.currentTask.audioNote = base64String;
-              await this.app.saveTasks();
-              this.app.renderAllTasks();
-              this.app.showFeedback('Audio note saved!', 'success');
-              this.close();
-          };
-          // Read the audio blob as a Data URL, which is a text format
-          reader.readAsDataURL(this.audioBlob);
-      }
+      // 1) Build a data URL so we get the right mime
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const dataUrl = reader.result; // e.g. "data:audio/mp4;base64,AAAA..."
+        // 2) Fetch it back into a Blob so we can grab its ArrayBuffer
+        const blob = await (await fetch(dataUrl)).blob();
+        const arrayBuffer = await blob.arrayBuffer();
+        const uint8 = new Uint8Array(arrayBuffer);
+    
+        // 3) Then update your bytea column with that TypedArray
+        const { error } = await supabase
+          .from('tasks')
+          .update({
+            audio_note: uint8,            // JS binary → Postgres bytea
+            audio_mime: blob.type         // keep the mime too
+          })
+          .eq('id', this.currentTask.id);
+    
+        if (error) {
+          console.error("Failed to save audio_note:", error);
+          this.app.showFeedback("Could not save audio note.", "error");
+        } else {
+          this.app.showFeedback("Audio note saved!", "success");
+          this.app.renderAllTasks();
+          this.close();
+        }
+      };
+      reader.readAsDataURL(this.audioBlob);
     }
+    
+    
+    
 
     startTimer() {
         let seconds = 0;
@@ -379,20 +395,19 @@ export class FocusMatrixCloud {
   }
 
   playAudioNote(task) {
-    if (!task.audioNote || typeof task.audioNote !== 'string') {
-        this.showFeedback("No valid audio note found.", "error");
-        return;
-    }
-    try {
-        // Re-create the full data URL from the pure Base64 string for playback
-        const audioUrl = `data:audio/webm;base64,${task.audioNote}`;
-        const audio = new Audio(audioUrl);
-        audio.play();
-    } catch (error) {
-        console.error("Error playing audio note:", error);
-        this.showFeedback("Could not play audio note.", "error");
-    }
+    if (!task.audio_note) return this.showFeedback("No audio note.", "error");
+    const mime = task.audio_mime || 'audio/webm';
+    // Postgres bytea → Uint8Array → base64 string
+    const b64 = btoa(
+      String.fromCharCode(...new Uint8Array(task.audio_note))
+    );
+    const url = `data:${mime};base64,${b64}`;
+    new Audio(url).play().catch(err => {
+      console.error(err);
+      this.showFeedback("Playback failed.", "error");
+    });
   }
+  
 
   /* ====================== TASK RENDERING ====================== */
   renderTask(task) {
@@ -625,49 +640,51 @@ export class FocusMatrixCloud {
 
   /* ====================== UNCHANGED METHODS ====================== */
   get isOnline() { return navigator.onLine && !!this.user; }
-  async loadTasks() {
-    if (this.isOnline) {
-      const { data, error } = await supabase.from('tasks').select('*').eq('user_id', this.user.id).order('created_at');
-      if (error) {
-        this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]');
-        return;
-      }
-      this.tasks = (data || []).map(dbTask => {
-        let finalAudioNote = null;
-        if (dbTask.audio_note && typeof dbTask.audio_note === 'string') {
-          // Check if the string is in PostgreSQL's hex format (starts with \x)
-          if (dbTask.audio_note.startsWith('\\x')) {
-            try {
-              // It's a hex string from the DB, so we must convert it to Base64
-              const hex = dbTask.audio_note.substring(2);
-              let binaryString = '';
-              for (let i = 0; i < hex.length; i += 2) {
-                binaryString += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
-              }
-              finalAudioNote = btoa(binaryString);
-            } catch (e) {
-              console.error("Could not parse hex audio note:", e);
-              finalAudioNote = null;
-            }
-          } else {
-            // Otherwise, assume it's already a valid Base64 string
-            finalAudioNote = dbTask.audio_note;
-          }
-        }
+// In app.js
 
-        return {
-          id: `task_${dbTask.id}`,
-          database_id: dbTask.id,
-          text: dbTask.text,
-          quadrant: dbTask.quadrant,
-          goal: dbTask.goal || null,
-          created_at: dbTask.created_at,
-          audioNote: finalAudioNote // Assign the clean, Base64 version
-        };
-      });
-    } else {
+  async loadTasks() {
+  if (this.isOnline) {
+    const { data, error } = await supabase.from('tasks').select('*').eq('user_id', this.user.id).order('created_at');
+    if (error) {
       this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]');
+      return;
     }
+    this.tasks = (data || []).map(dbTask => {
+      let finalAudioNote = null;
+      if (dbTask.audio_note && typeof dbTask.audio_note === 'string') {
+        // Check if the string is in PostgreSQL's hex format (starts with \x)
+        if (dbTask.audio_note.startsWith('\\x')) {
+          try {
+            // It's a hex string from the DB, so we must convert it to Base64
+            const hex = dbTask.audio_note.substring(2);
+            let binaryString = '';
+            for (let i = 0; i < hex.length; i += 2) {
+              binaryString += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+            }
+            finalAudioNote = btoa(binaryString);
+          } catch (e) {
+            console.error("Could not parse hex audio note:", e);
+            finalAudioNote = null;
+          }
+        } else {
+          // Otherwise, assume it's already a valid Base64 string
+          finalAudioNote = dbTask.audio_note;
+        }
+      }
+
+      return {
+        id: `task_${dbTask.id}`,
+        database_id: dbTask.id,
+        text: dbTask.text,
+        quadrant: dbTask.quadrant,
+        goal: dbTask.goal || null,
+        created_at: dbTask.created_at,
+        audioNote: finalAudioNote // Assign the clean, Base64 version
+      };
+    });
+  } else {
+    this.tasks = JSON.parse(localStorage.getItem('focusmatrix_ultimate_tasks') || '[]');
+  }
   }
   async saveTasks() {
     if (this.isOnline) {
@@ -692,7 +709,6 @@ export class FocusMatrixCloud {
                 });
             }
         }
-        
         if (existingTasks.length > 0) {
             const updates = existingTasks.map(t => ({
                 id: t.database_id,
